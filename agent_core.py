@@ -3,15 +3,24 @@ import os
 import re
 from pathlib import Path
 
-import chromadb
 import httpx
-import ollama
 from dotenv import load_dotenv
+
+try:
+    import chromadb
+except Exception:
+    chromadb = None
+
+try:
+    import ollama
+except Exception:
+    ollama = None
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
-MODEL = "llama3.2:3b"          # default Llama model
+# On cloud (Vercel) with GROQ_API_KEY, default to Groq Cloud Llama; otherwise local llama3.2:3b
+MODEL = "llama-3.3-70b-versatile" if os.getenv("GROQ_API_KEY") else "llama3.2:3b"
 EMBED_MODEL = "nomic-embed-text"
 OPTIONS = {
     "temperature": 0.2,
@@ -27,17 +36,27 @@ _collection = None
 
 def get_collection():
     global _client, _collection
+    if chromadb is None:
+        return None
     if _collection is None:
-        _client = chromadb.PersistentClient(path=DB_PATH)
-        _collection = _client.get_collection("dsa_notes")
+        try:
+            _client = chromadb.PersistentClient(path=DB_PATH)
+            _collection = _client.get_collection("dsa_notes")
+        except Exception:
+            _collection = None
     return _collection
 
 
 def reload_collection():
     """Call if notes were re-indexed."""
     global _client, _collection
-    _client = chromadb.PersistentClient(path=DB_PATH)
-    _collection = _client.get_collection("dsa_notes")
+    if chromadb is None:
+        return None
+    try:
+        _client = chromadb.PersistentClient(path=DB_PATH)
+        _collection = _client.get_collection("dsa_notes")
+    except Exception:
+        _collection = None
     return _collection
 
 
@@ -313,12 +332,13 @@ def run_turn_stream(messages, user_text, mode_override=None, model_override=None
         styled_msgs = styled(messages, mode, notes)
 
         # Choose inference engine: Groq Cloud Llama or Local Ollama Llama
+        has_groq_key = bool(os.getenv("GROQ_API_KEY", "").strip())
+
         if is_groq_model(active_model):
-            if bool(os.getenv("GROQ_API_KEY", "").strip()):
+            if has_groq_key:
                 pieces = stream_groq_chat(styled_msgs, active_model)
-            else:
-                # User selected a Groq Cloud model without setting an API key
-                # Gracefully fallback to local Ollama llama3.2:3b so they are never blocked!
+            elif ollama is not None:
+                # User selected a Groq Cloud model without setting an API key; fallback to local Ollama
                 try:
                     stream = ollama.chat(
                         model="llama3.2:3b",
@@ -329,25 +349,38 @@ def run_turn_stream(messages, user_text, mode_override=None, model_override=None
                     pieces = (c.message.content for c in stream if c.message and c.message.content)
                 except Exception:
                     raise ValueError(
-                        "GROQ_API_KEY is not set. To chat for free without an API key, switch the top-right model dropdown back to 'llama3.2:3b' (Local)! "
-                        "Or get a free Groq key in 30 seconds at https://console.groq.com."
+                        "GROQ_API_KEY is not set. Get a free API key at https://console.groq.com and save it in your Vercel Environment Variables or .env file."
                     )
-        else:
-            try:
-                stream = ollama.chat(
-                    model=clean_model_name(active_model),
-                    messages=styled_msgs,
-                    stream=True,
-                    options=OPTIONS,
+            else:
+                raise ValueError(
+                    "GROQ_API_KEY is not set. Get a free API key at https://console.groq.com and save it in your Vercel Environment Variables or .env file."
                 )
-                pieces = (c.message.content for c in stream if c.message and c.message.content)
-            except Exception as e:
-                # If local Ollama is not reachable and Groq key is present, fallback automatically
-                if os.getenv("GROQ_API_KEY"):
-                    yield {"type": "token", "text": "[Ollama unreachable, routing to Groq Cloud Llama...]\n\n"}
-                    pieces = stream_groq_chat(styled_msgs, "llama-3.3-70b-versatile")
-                else:
-                    raise e
+        else:
+            if ollama is not None:
+                try:
+                    stream = ollama.chat(
+                        model=clean_model_name(active_model),
+                        messages=styled_msgs,
+                        stream=True,
+                        options=OPTIONS,
+                    )
+                    pieces = (c.message.content for c in stream if c.message and c.message.content)
+                except Exception:
+                    if has_groq_key:
+                        yield {"type": "token", "text": "[Ollama unreachable, routing to Groq Cloud Llama...]\n\n"}
+                        pieces = stream_groq_chat(styled_msgs, "llama-3.3-70b-versatile")
+                    else:
+                        raise ValueError(
+                            "Local Ollama is not running or unreachable on this server. "
+                            "Please add GROQ_API_KEY to your Vercel Environment Variables to power cloud inference."
+                        )
+            elif has_groq_key:
+                pieces = stream_groq_chat(styled_msgs, "llama-3.3-70b-versatile")
+            else:
+                raise ValueError(
+                    "GROQ_API_KEY is not configured on this server. "
+                    "Please add GROQ_API_KEY to your Vercel Project Settings > Environment Variables."
+                )
 
         for piece in stream_clean(pieces):
             text += piece

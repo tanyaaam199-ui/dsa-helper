@@ -5,7 +5,10 @@ import os
 import random
 from typing import List, Dict, Any, Optional
 import httpx
-import ollama
+try:
+    import ollama
+except Exception:
+    ollama = None
 
 # Curated high-yield FAANG & tech interview flashcard bank
 FLASHCARD_BANK: List[Dict[str, Any]] = [
@@ -318,8 +321,8 @@ No extra text, no markdown backticks, just the raw JSON array."""
         except Exception as e:
             print(f"[groq flashcards]: {e}")
 
-    # Otherwise try local Ollama
-    if not content:
+    # Otherwise try local Ollama if available
+    if not content and ollama is not None:
         try:
             clean_m = model.split()[0].strip()
             resp = ollama.chat(
