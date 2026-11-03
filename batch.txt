@@ -1,0 +1,221 @@
+=== trees/binary_tree.md ===
+# Binary Tree and Traversals
+
+## What it is
+A binary tree is a structure where each node has at most two children (left and right). The depth of a node is its distance from the root, and the height of the tree is the longest root-to-leaf path. Most tree problems are solved with recursion: solve for the left subtree, solve for the right subtree, combine the results.
+
+## Traversals
+Inorder: left, node, right (gives sorted order in a BST). Preorder: node, left, right (copying or serializing a tree). Postorder: left, right, node (compute a value from the children first, such as height or deleting a tree). Level order: BFS using a queue, one level at a time. All are O(n) time, and recursion uses O(h) space where h is the height.
+
+## Python code
+    from collections import deque
+
+    class TreeNode:
+        def __init__(self, val=0, left=None, right=None):
+            self.val, self.left, self.right = val, left, right
+
+    def inorder(root):
+        return inorder(root.left) + [root.val] + inorder(root.right) if root else []
+
+    def height(root):
+        return 0 if not root else 1 + max(height(root.left), height(root.right))
+
+    def level_order(root):
+        if not root:
+            return []
+        res, queue = [], deque([root])
+        while queue:
+            level = []
+            for _ in range(len(queue)):        # process one full level
+                node = queue.popleft()
+                level.append(node.val)
+                if node.left: queue.append(node.left)
+                if node.right: queue.append(node.right)
+            res.append(level)
+        return res
+
+## Common problems
+Maximum Depth of Binary Tree, Invert Binary Tree, Diameter of Binary Tree, Balanced Binary Tree, Binary Tree Level Order Traversal, Lowest Common Ancestor, Path Sum, Serialize and Deserialize Binary Tree.
+
+=== trees/bst.md ===
+# Binary Search Tree (BST)
+
+## What it is
+A BST is a binary tree where for every node, all values in the left subtree are smaller and all values in the right subtree are larger. An inorder traversal of a BST gives the values in sorted order. Search, insert and delete take O(h): O(log n) when balanced, O(n) in the worst case when the tree is a chain.
+
+## When to use
+Problems about sorted order inside a tree: validate a BST, k-th smallest element, closest value, lowest common ancestor in a BST, convert a sorted array to a BST. Keywords: "BST", "inorder", "sorted".
+
+## Python code
+    def search(root, target):
+        while root and root.val != target:
+            root = root.left if target < root.val else root.right
+        return root
+
+    def is_valid_bst(root, low=float("-inf"), high=float("inf")):
+        if not root:
+            return True
+        if not (low < root.val < high):
+            return False
+        return (is_valid_bst(root.left, low, root.val) and
+                is_valid_bst(root.right, root.val, high))
+
+## Tips
+Validating a BST by only comparing a node with its direct children is wrong. Pass down the allowed range (low, high), or check that inorder traversal is strictly increasing. For the lowest common ancestor in a BST, walk down: if both values are smaller go left, if both are larger go right, otherwise the current node is the answer.
+
+## Common problems
+Validate Binary Search Tree, Kth Smallest Element in a BST, Lowest Common Ancestor of a BST, Insert into a BST, Convert Sorted Array to BST.
+
+=== trees/heap.md ===
+# Heap and Priority Queue
+
+## What it is
+A heap is a tree-based structure that always gives you the smallest (min-heap) or largest (max-heap) element quickly. Push and pop take O(log n), peeking at the top is O(1), and building a heap from a list with heapify is O(n). Python's heapq module is a min-heap. For a max-heap, push negative values.
+
+## When to use
+Top K elements, K-th largest or smallest, merging K sorted lists, scheduling the next task, repeatedly taking the min or max, running median (two heaps), Dijkstra's algorithm. Keywords: "top k", "k-th largest", "most frequent", "smallest k".
+
+## Python code
+    import heapq
+
+    # k-th largest: keep a min-heap of size k
+    def kth_largest(nums, k):
+        heap = nums[:k]
+        heapq.heapify(heap)
+        for x in nums[k:]:
+            if x > heap[0]:
+                heapq.heapreplace(heap, x)   # pop smallest, push x
+        return heap[0]                       # O(n log k)
+
+    # max-heap using negatives
+    max_heap = []
+    heapq.heappush(max_heap, -5)
+    largest = -heapq.heappop(max_heap)
+
+## Tips
+To get the top K largest, keep a MIN-heap of size K: the smallest of the K sits on top and gets replaced when something bigger arrives. For a running median, keep a max-heap for the lower half and a min-heap for the upper half, and keep their sizes within one of each other.
+
+## Common problems
+Kth Largest Element in an Array, Top K Frequent Elements, Merge K Sorted Lists, Find Median from Data Stream, Task Scheduler, K Closest Points to Origin, Last Stone Weight.
+
+=== trees/trie.md ===
+# Trie (Prefix Tree)
+
+## What it is
+A trie stores strings character by character in a tree, where each node represents one character and a flag marks the end of a word. Words sharing a prefix share the same path. Insert, search and prefix lookup all take O(L) where L is the length of the word, independent of how many words are stored.
+
+## When to use
+Prefix problems: autocomplete, "starts with", dictionary of words, word search with many words, longest common prefix, replacing words with their roots. Keywords: "prefix", "dictionary", "autocomplete".
+
+## Python code
+    class Trie:
+        def __init__(self):
+            self.children = {}
+            self.is_end = False
+
+        def insert(self, word):
+            node = self
+            for ch in word:
+                node = node.children.setdefault(ch, Trie())
+            node.is_end = True
+
+        def _walk(self, s):
+            node = self
+            for ch in s:
+                if ch not in node.children:
+                    return None
+                node = node.children[ch]
+            return node
+
+        def search(self, word):
+            node = self._walk(word)
+            return node is not None and node.is_end
+
+        def starts_with(self, prefix):
+            return self._walk(prefix) is not None
+
+## Tips
+A word and a prefix differ only by the end flag: search needs is_end to be true, starts_with does not. Use a trie instead of a hash set when many lookups share prefixes, or when you must explore characters step by step (Word Search II).
+
+## Common problems
+Implement Trie, Design Add and Search Words Data Structure, Word Search II, Replace Words, Longest Word in Dictionary, Search Suggestions System.
+
+=== searching/binary_search.md ===
+# Binary Search
+
+## What it is
+Binary search finds a target in a sorted array by repeatedly halving the search range. Compare the middle element with the target and throw away the half that cannot contain it. Time O(log n), space O(1).
+
+## When to use
+Sorted arrays, rotated sorted arrays, finding the first or last position of a value, and "binary search on the answer": when you can check if a value works (a monotonic yes/no condition) and want the smallest or largest value that works. Keywords: "sorted", "minimum such that", "maximum possible", "log n".
+
+## Python code (standard)
+    def binary_search(nums, target):
+        lo, hi = 0, len(nums) - 1
+        while lo <= hi:
+            mid = lo + (hi - lo) // 2
+            if nums[mid] == target:
+                return mid
+            elif nums[mid] < target:
+                lo = mid + 1
+            else:
+                hi = mid - 1
+        return -1
+
+## Python code (search on the answer: smallest value that works)
+    def smallest_valid(lo, hi, is_ok):    # is_ok(x) is False...False True...True
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            if is_ok(mid):
+                hi = mid          # mid might be the answer, keep it
+            else:
+                lo = mid + 1
+        return lo
+
+## Tips
+Common bugs are infinite loops from wrong lo/hi updates and off-by-one errors. With "while lo <= hi" always move to mid + 1 or mid - 1. With "while lo < hi" use hi = mid and lo = mid + 1. Python's bisect_left and bisect_right give the first position at or after, or after, a value.
+
+## Common problems
+Binary Search, Search in Rotated Sorted Array, Find First and Last Position of Element, Koko Eating Bananas, Capacity to Ship Packages Within D Days, Find Minimum in Rotated Sorted Array, Median of Two Sorted Arrays.
+
+=== linked_lists/linked_list.md ===
+# Linked List
+
+## What it is
+A linked list is a chain of nodes where each node stores a value and a pointer to the next node. Access by index is O(n), but inserting or deleting at a known node is O(1). Most problems use pointer tricks: a dummy node, fast and slow pointers, and reversing links.
+
+## When to use
+Reverse a list, find the middle, detect a cycle, merge two sorted lists, remove the n-th node from the end, check a palindrome. Keywords: "linked list", "in-place", "O(1) space".
+
+## Python code
+    class ListNode:
+        def __init__(self, val=0, next=None):
+            self.val, self.next = val, next
+
+    def reverse(head):
+        prev = None
+        while head:
+            nxt = head.next
+            head.next = prev
+            prev, head = head, nxt
+        return prev
+
+    def has_cycle(head):            # fast and slow pointers (Floyd)
+        slow = fast = head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            === graphs/graph_terms.md ===
+# Graph Terminology
+
+## Degree, in-degree and out-degree
+In an undirected graph, the degree of a node is the number of edges connected to it. In a directed graph, the in-degree of a node is the number of edges coming INTO it (edges that end at the node), and the out-degree is the number of edges going OUT of it (edges that start at the node). Example with edges A->B, A->C, C->B: node A has out-degree 2 and in-degree 0, node B has in-degree 2 and out-degree 0, node C has in-degree 1 and out-degree 1. The sum of all in-degrees equals the sum of all out-degrees, and both equal the number of edges. A node with in-degree 0 is a source, and a node with out-degree 0 is a sink. In-degree is used in topological sort: Kahn's algorithm starts from nodes with in-degree 0.
+
+## Directed and undirected graphs
+In an undirected graph an edge connects two nodes both ways, so A-B means you can go from A to B and from B to A. In a directed graph (digraph) an edge A->B only lets you go from A to B. Many problems hide the direction, so check whether edges are one-way (prerequisites, follow relationships, one-way roads) or two-way (friendships, two-way roads).
+
+## Paths, cycles and connectivity
+A path is a sequence of nodes where each consecutive pair is joined by an edge. A cycle is a path that starts and ends at the same node. A connected component is a group of nodes that can all reach each other. In a directed graph, strongly connected means every node can reach every other node following the edge directions. A DAG is a directed graph with no cycles.
+
+## Weighted graphs, trees, sparse and dense
+A weighted graph gives each edge a number such as a cost or distance. A tree is a connected undirected graph with no cycles and exactly V-1 edges. A sparse graph has few edges (about V), a dense graph has many (close to V squared). Sparse graphs fit adjacency lists, and dense graphs can use an adjacency matrix.

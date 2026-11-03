@@ -1,0 +1,3639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TanDSA - AI DSA Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Sora:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var t = localStorage.getItem("dsa_theme");
+    if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
+<style>
+  :root {
+    --bg: #07080b;
+    --bg-subtle: #0d0e14;
+    --panel: #12131b;
+    --panel-border: #1f212c;
+    --panel-hover: #181a24;
+    --text: #f8fafc;
+    --text-muted: #8e94a8;
+    --accent: #ff6a00;
+    --accent-glow: rgba(255, 106, 0, 0.4);
+    --accent-secondary: #ff9100;
+    --accent-soft: rgba(255, 106, 0, 0.12);
+    --ai-purple: #a855f7;
+    --ai-purple-soft: rgba(168, 85, 247, 0.12);
+    --perf-green: #10b981;
+    --perf-green-soft: rgba(16, 185, 129, 0.12);
+    --streak-amber: #f59e0b;
+    --streak-amber-soft: rgba(245, 158, 11, 0.12);
+    --pointer-cyan: #06b6d4;
+    --pointer-cyan-soft: rgba(6, 182, 212, 0.12);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --code-bg: #040507;
+    --code-border: #1a1b24;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.65);
+  }
+
+  [data-theme="light"] {
+    --bg: #faf9f6;
+    --bg-subtle: #f2eee8;
+    --panel: #ffffff;
+    --panel-border: #e6e2d8;
+    --panel-hover: #f7f5ee;
+    --text: #18181b;
+    --text-muted: #71717a;
+    --accent: #ea580c;
+    --accent-glow: rgba(234, 88, 12, 0.25);
+    --accent-secondary: #f59e0b;
+    --accent-soft: rgba(234, 88, 12, 0.1);
+    --ai-purple: #9333ea;
+    --ai-purple-soft: rgba(147, 51, 234, 0.1);
+    --perf-green: #059669;
+    --perf-green-soft: rgba(5, 150, 105, 0.1);
+    --streak-amber: #d97706;
+    --streak-amber-soft: rgba(217, 119, 6, 0.1);
+    --pointer-cyan: #0891b2;
+    --pointer-cyan-soft: rgba(8, 145, 178, 0.1);
+    --code-bg: #18181b;
+    --code-border: #e6e2d8;
+    --shadow-soft: 0 10px 25px rgba(234, 88, 12, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-size: 15.5px;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  
+  /* Multi-color cyber accent dots */
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .pill-dot.violet { background: #a855f7; box-shadow: 0 0 6px #a855f7; }
+  .pill-dot.amber { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+  .pill-dot.cyan { background: #06b6d4; box-shadow: 0 0 6px #06b6d4; }
+  .pill-dot.purple { background: #c084fc; box-shadow: 0 0 6px #c084fc; }
+  .pill-dot.green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+  .pill-dot.orange { background: #ff6a00; box-shadow: 0 0 6px #ff6a00; }
+
+  .status-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+    display: inline-block;
+  }
+  .streak-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f5590b;
+    box-shadow: 0 0 8px #f59e0b;
+    display: inline-block;
+  }
+  .cat-bullet {
+    width: 6px;
+    height: 6px;
+    border-radius: 2px;
+    background: var(--accent);
+    display: inline-block;
+    opacity: 0.8;
+  }
+
+  /* Contrast guarantee for TanDSA */
+  .brand-logo-text .brand-lead {
+    color: var(--text);
+    transition: color 0.2s ease;
+  }
+  .brand-logo-text .brand-highlight {
+    color: var(--accent);
+    font-weight: 900;
+  }
+
+  /* App Shell Grid */
+  .app-container {
+    display: grid;
+    grid-template-columns: 280px 1fr 440px;
+    grid-template-rows: 60px 1fr;
+    height: 100vh;
+    width: 100vw;
+    transition: grid-template-columns 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .app-container.sandbox-collapsed {
+    grid-template-columns: 280px 1fr 0px;
+  }
+  .app-container.sidebar-collapsed {
+    grid-template-columns: 0px 1fr 440px;
+  }
+  .app-container.sidebar-collapsed.sandbox-collapsed {
+    grid-template-columns: 0px 1fr 0px;
+  }
+
+  /* Header */
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--panel-border);
+    z-index: 20;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+  }
+  .brand-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 14px var(--accent-glow);
+  }
+  .header-tag {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.80rem;
+    font-weight: 800;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mode-pill {
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 7px 15px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-pill:hover {
+    background: var(--panel-hover);
+    color: var(--text);
+  }
+  .mode-pill.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 2px 10px var(--accent-glow);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .model-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .model-select {
+    appearance: none;
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .icon-btn {
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover {
+    color: var(--text);
+    background: var(--panel-hover);
+    border-color: var(--accent);
+  }
+  .icon-btn.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Left Sidebar: Topics */
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.94rem;
+    outline: none;
+  }
+  .search-input:focus {
+    border-color: var(--accent);
+  }
+  .new-chat-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    border: 0;
+    padding: 9px 14px;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px var(--accent-glow);
+    transition: transform 0.12s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .new-chat-btn:hover {
+    transform: translateY(-1px);
+  }
+  .topics-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .category-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .category-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .topic-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    text-align: left;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    width: 100%;
+  
+    font-family: 'Outfit', sans-serif;}
+  .topic-item:hover {
+    background: var(--panel-hover);
+  }
+  .topic-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .topic-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .topic-item:hover .topic-actions {
+    opacity: 1;
+  }
+  .mini-btn {
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.68rem;
+    cursor: pointer;
+  }
+  .mini-btn:hover {
+    color: var(--text);
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  /* Center Chat Pane */
+  .chat-pane {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    overflow: hidden;
+    position: relative;
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* Welcome Screen */
+  /* Welcome Feature Chip */
+  .welcome-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: #ff9d00;
+    background: rgba(255, 106, 0, 0.1);
+    border: 1px solid rgba(255, 106, 0, 0.28);
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 4px;
+    box-shadow: 0 0 16px rgba(255, 106, 0, 0.15);
+  }
+  .welcome-chip .chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff6a00;
+    box-shadow: 0 0 8px #ff6a00;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+
+  /* Interactive Quick Card Showcase */
+  .card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .card-pill {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .card-pill.pill-amber { background: rgba(245, 158, 11, 0.14); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+  .card-pill.pill-cyan { background: rgba(6, 182, 212, 0.14); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); }
+  .card-pill.pill-purple { background: rgba(168, 85, 247, 0.14); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+  .card-pill.pill-green { background: rgba(16, 185, 129, 0.14); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+  .card-complexity {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .card-arrow {
+    display: inline-block;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--accent);
+    margin-left: 6px;
+  }
+  .quick-card:hover .card-arrow {
+    transform: translateX(5px);
+  }
+
+  .welcome-screen {
+    max-width: 680px;
+    margin: 40px auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .welcome-badge {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 2.6rem;
+    box-shadow: 0 8px 24px var(--accent-glow);
+  }
+  .welcome-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 3.4rem;
+    line-height: 1.12;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .welcome-title .brand-lead {
+    color: var(--text);
+    transition: color 0.2s ease;
+  }
+  .welcome-title .brand-highlight {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+  }
+  .welcome-desc {
+    color: var(--text-muted);
+    font-size: 1.12rem;
+    line-height: 1.7;
+    max-width: 580px;
+  
+    font-family: 'Outfit', sans-serif;}
+  .quick-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin-top: 16px;
+    text-align: left;
+  }
+  .quick-card {
+    background: linear-gradient(145deg, rgba(22, 25, 34, 0.85) 0%, rgba(11, 13, 18, 0.95) 100%);
+    border: 1px solid rgba(255, 106, 0, 0.18);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
+  .quick-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 28px rgba(255, 106, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  }
+  .quick-card-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .quick-card-desc {
+    font-size: 0.90rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+  
+    font-family: 'Outfit', sans-serif;}
+
+  /* Message Rows */
+  .msg-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .msg-row.user {
+    flex-direction: row-reverse;
+  }
+  .msg-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .msg-row.bot .msg-avatar {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+  .msg-row.user .msg-avatar {
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+  }
+  .msg-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 80%;
+  }
+  .msg-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .msg-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .msg-bubble {
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    font-size: 1.05rem;
+    line-height: 1.72;
+    word-break: break-word;
+  
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.01em;}
+  .msg-row.user .msg-bubble {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .msg-row.bot .msg-bubble {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    border-top-left-radius: 4px;
+    box-shadow: var(--shadow-soft);
+  }
+  .msg-bubble.streaming::after {
+    content: "▋";
+    display: inline-block;
+    color: var(--accent);
+    margin-left: 4px;
+    animation: blink 0.9s infinite;
+  }
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+  /* Markdown & Code Blocks inside Messages */
+  .msg-bubble p { margin-bottom: 10px; }
+  .msg-bubble p:last-child { margin-bottom: 0; }
+  .msg-bubble ul, .msg-bubble ol { margin-left: 20px; margin-bottom: 10px; }
+  .msg-bubble li { margin-bottom: 4px; }
+  .msg-bubble code:not(pre code) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255, 106, 0, 0.12);
+    color: #ff9d00;
+    border: 1px solid rgba(255, 106, 0, 0.25);
+    font-weight: 600;
+  }
+  .code-block-container {
+    position: relative;
+    margin: 12px 0;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+  }
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--code-border);
+    font-size: 0.72rem;
+    font-family: "JetBrains Mono", monospace;
+    color: var(--text-muted);
+  }
+  .code-block-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .code-action-btn {
+    background: rgba(255, 255, 255, 0.07);
+    border: 0;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.12s;
+  }
+  .code-action-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .code-block-container pre {
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  /* Chat Input Area */
+  .chat-input-area {
+    padding: 12px 28px 20px;
+    background: var(--bg);
+    border-top: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .input-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--panel);
+    border: 1.5px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    padding: 10px 14px;
+    box-shadow: var(--shadow-soft);
+    transition: border-color 0.15s;
+  }
+  .input-bar:focus-within {
+    border-color: var(--accent);
+  }
+  .chat-textarea {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: none;
+    resize: none;
+    color: var(--text);
+    font: inherit;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-height: 180px;
+    min-height: 24px;
+  
+    font-family: 'Outfit', sans-serif;}
+  .chat-textarea::placeholder {
+    color: var(--text-muted);
+  }
+  .input-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mic-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 0;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mic-btn:hover {
+    color: var(--text);
+    background: var(--panel-hover);
+  }
+  .mic-btn.listening {
+    background: var(--danger);
+    color: #fff;
+    animation: mic-pulse 1.2s infinite;
+  }
+  @keyframes mic-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+    100% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+  }
+  .send-btn {
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 10px;
+    border: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    font: inherit;
+    font-size: 0.96rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px var(--accent-glow);
+    transition: transform 0.12s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .send-btn:hover {
+    transform: translateY(-1px);
+  }
+  .send-btn.stop {
+    background: var(--danger);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+
+  /* Right Panel: Sandbox, Visualizer & Drills */
+  .sandbox-pane {
+    background: var(--panel);
+    border-left: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sandbox-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--panel-border);
+    background: var(--bg-subtle);
+  }
+  .sandbox-tab {
+    flex: 1;
+    padding: 11px 16px;
+    text-align: center;
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.90rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .sandbox-tab:hover {
+    color: var(--text);
+  }
+  .sandbox-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: var(--panel);
+  }
+  .sandbox-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .tab-view {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+  }
+  .tab-view.active {
+    display: flex;
+  }
+
+  /* Code Playground */
+  .editor-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-subtle);
+  }
+  .template-select {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.76rem;
+    outline: none;
+  }
+  .editor-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-run {
+    background: var(--success);
+    color: #fff;
+    border: 0;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: opacity 0.12s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .btn-run:hover { opacity: 0.9; }
+  .btn-review {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    border: 0;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .code-editor-textarea {
+    flex: 1;
+    min-height: 260px;
+    background: var(--code-bg);
+    color: #f8fafc;
+    border: 0;
+    outline: none;
+    padding: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    resize: none;
+  }
+  .terminal-box {
+    height: 160px;
+    border-top: 1px solid var(--panel-border);
+    background: #06070a;
+    display: flex;
+    flex-direction: column;
+  }
+  .terminal-header {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    font-family: "JetBrains Mono", monospace;
+    color: var(--text-muted);
+  }
+  .terminal-output {
+    flex: 1;
+    padding: 10px 12px;
+    overflow-y: auto;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #94a3b8;
+    white-space: pre-wrap;
+  }
+  .terminal-output.error { color: #f87171; }
+  .terminal-output.success { color: #4ade80; }
+
+  /* Algorithm Visualizer */
+  .visualizer-container {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .vis-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .vis-btn {
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .vis-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .vis-display-box {
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    padding: 18px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .vis-array {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .vis-cell {
+    width: 36px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--panel);
+    border: 1.5px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 800;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+    min-width: 44px;}
+  .vis-cell small {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .vis-cell.lo {
+    border-color: var(--warning);
+    background: rgba(245, 158, 11, 0.15);
+  }
+  .vis-cell.hi {
+    border-color: #ff9100;
+    background: rgba(255, 145, 0, 0.18);
+  }
+  .vis-cell.mid {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+  .vis-cell.discarded {
+    opacity: 0.3;
+    border-style: dashed;
+  }
+  .vis-cell.found {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+    transform: scale(1.15);
+  }
+  .vis-status-text {
+    font-size: 0.92rem;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.55;
+    background: var(--panel);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--panel-border);
+    width: 100%;
+  
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;}
+
+  .vis-header-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .vis-algo-select {
+    width: 100%;
+    background: var(--bg-subtle);
+    border: 1.5px solid var(--panel-border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .vis-algo-select:focus {
+    border-color: var(--accent);
+  }
+  .vis-sub-panel {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .vis-sub-panel.active {
+    display: flex;
+  }
+
+  /* Two Pointers styling */
+  .vis-cell.ptr-left {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.22) !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    transform: scale(1.06);
+  }
+  .vis-cell.ptr-right {
+    border-color: #f97316 !important;
+    background: rgba(249, 115, 22, 0.22) !important;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+    transform: scale(1.06);
+  }
+  .ptr-tag {
+    position: absolute;
+    font-size: 0.55rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .ptr-tag.l { bottom: -18px; background: #3b82f6; color: #fff; }
+  .ptr-tag.r { top: -18px; background: #f97316; color: #fff; }
+
+  /* Sliding Window styling */
+  .vis-cell.in-window {
+    border-color: var(--accent) !important;
+    background: rgba(255, 106, 0, 0.22) !important;
+    box-shadow: 0 0 12px rgba(255, 106, 0, 0.28);
+    transform: scale(1.04);
+  }
+
+  /* Tree node visualizer styling */
+  .tree-svg-wrap {
+    width: 100%;
+    height: 155px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .tree-node-circle {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .tree-node-circle.active-visit {
+    fill: #ff6a00 !important;
+    filter: drop-shadow(0 0 12px #ff6a00);
+    transform-origin: center;
+  }
+  .tree-node-circle.visited {
+    fill: #10b981 !important;
+  }
+
+  /* Stack & Queue styling */
+  .stack-container {
+    width: 130px;
+    height: 150px;
+    border: 2px solid var(--panel-border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .queue-container {
+    width: 100%;
+    height: 52px;
+    border: 2px dashed var(--panel-border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .sq-item {
+    padding: 5px 12px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px var(--accent-glow);
+    animation: sq-pop 0.2s ease-out;
+  }
+  @keyframes sq-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Flashcards Drill */
+  .drill-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .drill-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-subtle);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--panel-border);
+  }
+  .streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #f97316;
+  }
+  .date-badge {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .drill-deck-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .deck-select {
+    flex: 1;
+    background: var(--bg-subtle);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+    outline: none;
+  }
+  .btn-gen-cards {
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    color: #fff;
+    border: 0;
+    padding: 7px 12px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.12s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .btn-gen-cards:hover { opacity: 0.9; }
+
+  .flashcard-wrapper {
+    perspective: 1000px;
+    width: 100%;
+    height: 250px;
+    cursor: pointer;
+  }
+  .flashcard {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-md);
+  }
+  .flashcard.flipped {
+    transform: rotateY(180deg);
+  }
+  .flashcard-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: var(--radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--bg-subtle);
+    border: 1.5px solid var(--panel-border);
+    box-shadow: var(--shadow-soft);
+  }
+  .flashcard-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, rgba(255, 106, 0, 0.08), rgba(255, 145, 0, 0.14));
+    border-color: var(--accent);
+  }
+  .card-top-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-topic-tag {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .card-diff-tag {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .card-diff-tag.Easy { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+  .card-diff-tag.Medium { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+  .card-diff-tag.Hard { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+  .takeaway-box {
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 3px solid var(--accent);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.74rem;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .card-back-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .btn-card-action {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.12s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .btn-card-action:hover {
+    background: var(--panel-hover);
+  }
+  .btn-card-action.master {
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .btn-card-action.master:hover {
+    background: var(--success);
+    color: #fff;
+  }
+  .btn-card-action.ask {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-card-action.ask:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .drill-controls {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .drill-btn {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 0.90rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+  .drill-btn:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .drill-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-subtle);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .drill-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    width: 20%;
+    transition: width 0.25s ease;
+  }
+  .drill-completion-msg {
+    display: none;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid var(--success);
+    color: var(--success);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    text-align: center;
+    font-size: 0.98rem;
+    font-weight: 700;
+  
+    font-family: 'Sora', 'Space Grotesk', sans-serif;}
+
+  /* Cheat Sheet Drawer / Modal */
+  .cheatsheet-view {
+    padding: 18px;
+    overflow-y: auto;
+  }
+  .cheatsheet-content {
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: var(--text);
+  
+    font-family: 'Outfit', sans-serif;}
+  .cheatsheet-content h1 { font-size: 1.6rem; margin-bottom: 12px; color: var(--accent); 
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-weight: 800;}
+  .cheatsheet-content h2 { font-size: 1.25rem; margin: 14px 0 6px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; 
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-weight: 700;}
+  .cheatsheet-content pre { background: var(--code-bg); padding: 10px; border-radius: 6px; font-family: "JetBrains Mono"; font-size: 0.8rem; overflow-x: auto; margin: 8px 0; }
+
+  /* ---------- Huge Master DSA Splash Screen Flasher ---------- */
+  .intro-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #06070a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.65s ease;
+  }
+  .intro-splash.fade-out {
+    opacity: 0;
+    transform: scale(1.08);
+    filter: blur(6px);
+    pointer-events: none;
+  }
+  .splash-backdrop-glow {
+    position: absolute;
+    width: 720px;
+    height: 720px;
+    background: radial-gradient(circle, rgba(255, 106, 0, 0.32) 0%, rgba(255, 150, 0, 0.12) 42%, transparent 72%);
+    filter: blur(70px);
+    pointer-events: none;
+    animation: splash-glow 3.5s ease-in-out infinite alternate;
+  }
+  @keyframes splash-glow {
+    0% { transform: scale(0.85); opacity: 0.7; }
+    100% { transform: scale(1.25); opacity: 1; }
+  }
+  .splash-grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255, 106, 0, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 106, 0, 0.06) 1px, transparent 1px);
+    background-size: 38px 38px;
+    mask-image: radial-gradient(circle, black 40%, transparent 85%);
+    pointer-events: none;
+  }
+  .splash-scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(255, 106, 0, 0.8), rgba(255, 180, 0, 1), rgba(255, 106, 0, 0.8), transparent);
+    box-shadow: 0 0 15px rgba(255, 106, 0, 0.9);
+    pointer-events: none;
+    animation: scanlineSweep 4s ease-in-out infinite;
+    z-index: 1;
+  }
+  @keyframes scanlineSweep {
+    0% { transform: translateY(-100px); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(100vh); opacity: 0; }
+  }
+  .splash-floating-pill {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    background: rgba(13, 15, 22, 0.82);
+    border: 1px solid rgba(255, 106, 0, 0.3);
+    backdrop-filter: blur(12px);
+    border-radius: 999px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+    z-index: 2;
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    animation: floatBob 5s ease-in-out infinite alternate;
+  }
+  .splash-floating-pill .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff6a00;
+    box-shadow: 0 0 8px #ff6a00;
+  }
+  .splash-floating-pill .pill-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: #ff9d00;
+  }
+  .splash-floating-pill .pill-label {
+    color: #9ca3af;
+    font-weight: 600;
+  }
+  .pill-1 { top: 12%; left: 8%; animation-delay: 0s; }
+  .pill-2 { top: 14%; right: 9%; animation-delay: 1.2s; }
+  .pill-3 { bottom: 20%; left: 7%; animation-delay: 2.4s; }
+  .pill-4 { bottom: 18%; right: 8%; animation-delay: 0.8s; }
+  .pill-5 { top: 48%; left: 4%; animation-delay: 1.8s; }
+  .pill-6 { top: 50%; right: 5%; animation-delay: 2.9s; }
+  @keyframes floatBob {
+    0% { transform: translateY(0px) rotate(-1deg); }
+    100% { transform: translateY(-16px) rotate(1.5deg); }
+  }
+  @media (max-width: 900px) {
+    .splash-floating-pill { display: none; }
+  }
+
+  .splash-card {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    padding: 24px;
+    animation: splash-pop 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes splash-pop {
+    0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .splash-badge-wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 4px;
+  }
+  .splash-badge {
+    width: 78px;
+    height: 78px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ff5500, #ff9400);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 2.1rem;
+    font-weight: 900;
+    font-family: "JetBrains Mono", monospace;
+    box-shadow: 0 0 45px rgba(255, 106, 0, 0.75), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 2;
+  }
+  .splash-ring-outer {
+    position: absolute;
+    inset: -6px;
+    border: 2px dashed rgba(255, 106, 0, 0.65);
+    border-radius: 50%;
+    animation: ring-spin-cw 14s linear infinite;
+  }
+  .splash-ring-inner {
+    position: absolute;
+    inset: 4px;
+    border: 1.5px dotted rgba(255, 170, 0, 0.55);
+    border-radius: 50%;
+    animation: ring-spin-ccw 9s linear infinite;
+  }
+  .splash-pulse {
+    position: absolute;
+    inset: -14px;
+    border: 1.5px solid rgba(255, 106, 0, 0.35);
+    border-radius: 50%;
+    animation: ring-pulse 2.2s ease-out infinite;
+  }
+  @keyframes ring-spin-cw {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes ring-spin-ccw {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+  }
+  @keyframes ring-pulse {
+    0% { transform: scale(0.85); opacity: 0.8; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+
+  .splash-tag {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.80rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    color: #ff9d00;
+    text-transform: uppercase;
+    background: rgba(255, 106, 0, 0.12);
+    border: 1px solid rgba(255, 106, 0, 0.3);
+    padding: 5px 16px;
+    border-radius: 999px;
+  }
+  .splash-title {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 4.6rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+    line-height: 1;
+    text-shadow: 0 6px 35px rgba(0, 0, 0, 0.95);
+  }
+  .splash-accent {
+    background: linear-gradient(135deg, #ff5500 15%, #ffb700 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    filter: drop-shadow(0 0 35px rgba(255, 106, 0, 0.9));
+  }
+  .splash-subtitle {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.94rem;
+    font-weight: 700;
+    letter-spacing: 0.20em;
+    color: #9ca3af;
+    text-transform: uppercase;
+    margin-top: -4px;
+  }
+
+  .splash-telemetry-box {
+    width: 400px;
+    max-width: 90vw;
+    background: rgba(10, 12, 18, 0.85);
+    border: 1px solid rgba(255, 106, 0, 0.25);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-top: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  .splash-telemetry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .splash-telemetry-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #9ca3af;
+  }
+  .telemetry-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ff6a00;
+    box-shadow: 0 0 6px #ff6a00;
+    animation: dotPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.8); }
+  }
+  .splash-percent {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ff9d00;
+    text-shadow: 0 0 10px rgba(255, 157, 0, 0.6);
+  }
+  .splash-loader-bar {
+    width: 100%;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .splash-loader-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff4d00, #ff8c00, #ffb800);
+    box-shadow: 0 0 16px rgba(255, 106, 0, 0.95);
+    transition: width 0.08s linear;
+  }
+  .splash-status-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.76rem;
+    color: #ff9400;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    min-height: 1.3em;
+  }
+  .splash-cursor {
+    animation: cursorBlink 0.8s steps(2, start) infinite;
+    color: #ff6a00;
+  }
+  @keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .splash-specs-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .splash-spec-chip {
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #a1a1aa;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .splash-skip {
+    position: absolute;
+    bottom: 30px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #a1a1aa;
+    font-family: 'Sora', 'Space Grotesk', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 10;
+  }
+  .splash-skip:hover {
+    color: #fff;
+    border-color: #ff6a00;
+    background: rgba(255, 106, 0, 0.16);
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 1080px) {
+    .app-container { grid-template-columns: 240px 1fr 0px; }
+    .app-container.sandbox-open { grid-template-columns: 0px 1fr 400px; }
+  }
+  @media (max-width: 768px) {
+    .app-container { grid-template-columns: 0px 1fr 0px; }
+    .header-center { display: none; }
+    .splash-title { font-size: 2.8rem; }
+    .splash-loader-bar { width: 240px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Huge Master DSA Flasher Splash Screen -->
+<div id="introSplash" class="intro-splash">
+  <div class="splash-backdrop-glow"></div>
+  <div class="splash-grid-lines"></div>
+  <div class="splash-scanline"></div>
+
+  <!-- Holographic Floating Algorithm Badges -->
+  <div class="splash-floating-pill pill-1">
+    <span class="pill-dot"></span>
+    <span class="pill-code">O(N log K)</span>
+    <span class="pill-label">Heap Priority Queue</span>
+  </div>
+  <div class="splash-floating-pill pill-2">
+    <span class="pill-dot"></span>
+    <span class="pill-code">lo + (hi-lo)//2</span>
+    <span class="pill-label">Binary Search</span>
+  </div>
+  <div class="splash-floating-pill pill-3">
+    <span class="pill-dot"></span>
+    <span class="pill-code">[L .. R]</span>
+    <span class="pill-label">Sliding Window</span>
+  </div>
+  <div class="splash-floating-pill pill-4">
+    <span class="pill-dot"></span>
+    <span class="pill-code">dp[i][w]</span>
+    <span class="pill-label">Dynamic Programming</span>
+  </div>
+  <div class="splash-floating-pill pill-5">
+    <span class="pill-dot"></span>
+    <span class="pill-code">left &rarr; &larr; right</span>
+    <span class="pill-label">Two Pointers</span>
+  </div>
+  <div class="splash-floating-pill pill-6">
+    <span class="pill-dot"></span>
+    <span class="pill-code">queue.popleft()</span>
+    <span class="pill-label">Graph / Tree BFS</span>
+  </div>
+
+  <div class="splash-card">
+    <div class="splash-badge-wrap">
+      <div class="splash-ring-outer"></div>
+      <div class="splash-ring-inner"></div>
+      <div class="splash-pulse"></div>
+      <div class="splash-badge">&lt;/&gt;</div>
+    </div>
+    
+    <div class="splash-tag">
+      SYSTEM ONLINE &bull; SPEED LEARNING ENGINE v2.4
+    </div>
+    
+    <h1 class="splash-title">
+      Tan<span class="splash-accent">DSA</span>
+    </h1>
+    
+    <p class="splash-subtitle">DATA STRUCTURES &bull; ALGORITHMS &bull; AI INTERVIEW COACH</p>
+
+    <!-- Telemetry progress box -->
+    <div class="splash-telemetry-box">
+      <div class="splash-telemetry-header">
+        <span class="splash-telemetry-label">
+          <span class="telemetry-live-dot"></span> BOOTLOADER SEQUENCE
+        </span>
+        <span class="splash-percent" id="splashPercent">0%</span>
+      </div>
+
+      <div class="splash-loader-bar">
+        <div class="splash-loader-fill" id="splashFill"></div>
+      </div>
+
+      <div class="splash-status-wrap">
+        <span class="splash-prompt">&gt;</span>
+        <span class="splash-status" id="splashStatus">INITIALIZING TanDSA ENGINE CORE...</span>
+        <span class="splash-cursor">▋</span>
+      </div>
+    </div>
+
+    <!-- Tech spec footer chips -->
+    <div class="splash-specs-row">
+      <span class="splash-spec-chip">119 CHROMA CHUNKS</span>
+      <span class="splash-spec-chip">DAILY STREAK DRILLS</span>
+      <span class="splash-spec-chip">5 ALGO VISUALIZERS</span>
+      <span class="splash-spec-chip">LLAMA 3.2 RUNTIME</span>
+    </div>
+  </div>
+
+  <button class="splash-skip" id="splashSkip">Skip [Esc]</button>
+</div>
+
+<div class="app-container" id="appRoot">
+
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <button class="icon-btn" id="toggleSidebar" title="Toggle Topics Sidebar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+      <div class="brand-logo" id="logoBtn">
+        <div class="brand-badge">&lt;/&gt;</div>
+        <span class="brand-logo-text"><span class="brand-lead">Tan</span><span class="brand-highlight">DSA</span></span>
+      </div>
+      <span class="header-tag" id="statusTag"><span class="status-live-dot"></span> Llama 3.2</span>
+    </div>
+
+    <!-- Mode Pills -->
+    <div class="header-center">
+      <button class="mode-pill active" data-mode="auto"><span class="pill-dot violet"></span> Auto</button>
+      <button class="mode-pill" data-mode="hint"><span class="pill-dot amber"></span> Hint</button>
+      <button class="mode-pill" data-mode="review"><span class="pill-dot cyan"></span> Code Review</button>
+      <button class="mode-pill" data-mode="detailed"><span class="pill-dot purple"></span> Deep Dive</button>
+      <button class="mode-pill" data-mode="code"><span class="pill-dot green"></span> Solution</button>
+      <button class="mode-pill" data-mode="quiz"><span class="pill-dot orange"></span> Quiz Me</button>
+    </div>
+
+    <div class="header-right">
+      <div class="model-select-wrapper">
+        <select class="model-select" id="modelSelector">
+          <option value="llama3.2:3b">llama3.2:3b (Local)</option>
+        </select>
+      </div>
+      <button class="icon-btn" id="voiceToggle" title="Audio Read-Aloud Toggle"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg></button>
+      <button class="icon-btn" id="themeToggle" title="Dark/Light Mode"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+      <button class="icon-btn active" id="toggleSandbox" title="Toggle Code Sandbox & Visualizer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg></button>
+    </div>
+  </header>
+
+  <!-- Left Sidebar: Topics & Knowledge Base -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <button class="new-chat-btn" id="newChatBtn">
+        <span>+</span> New Conversation
+      </button>
+      <input type="text" class="search-input" id="topicSearch" placeholder="Search patterns & topics..." />
+    </div>
+    <div class="topics-scroll" id="topicsList">
+      <!-- Dynamic topics injected by JS -->
+    </div>
+  </aside>
+
+  <!-- Center Chat Area -->
+  <main class="chat-pane">
+    <div class="chat-messages" id="chatMessages">
+      
+      <!-- Welcome Screen -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-badge">&lt;/&gt;</div>
+        <div class="welcome-chip"><span class="chip-dot"></span> AI INTERVIEW COACH &bull; 119 CURATED DSA TOPICS</div>
+        <h1 class="welcome-title"><span class="brand-lead">Tan</span><span class="brand-highlight">DSA</span></h1>
+        <p class="welcome-desc">
+          Interactive algorithm traces, instant sandbox runtime, and AI interview drills. Choose a mode above or click a feature card to begin:
+        </p>
+        <div class="quick-cards">
+          <div class="quick-card" data-prompt="Give me a hint on how to approach the Two Sum problem in Arrays without revealing code.">
+            <div class="card-header-row">
+              <span class="card-pill pill-amber">PATTERNS</span>
+              <span class="card-complexity">O(N) Optimal</span>
+            </div>
+            <div class="quick-card-title">Arrays: Two Sum Hint <span class="card-arrow">&rarr;</span></div>
+            <div class="quick-card-desc">Master the hash map complement trick without code spoilers</div>
+          </div>
+
+          <div class="quick-card" data-prompt="Explain Binary Search on the answer with an example.">
+            <div class="card-header-row">
+              <span class="card-pill pill-cyan">SEARCH</span>
+              <span class="card-complexity">O(log N) Time</span>
+            </div>
+            <div class="quick-card-title">Binary Search Walkthrough <span class="card-arrow">&rarr;</span></div>
+            <div class="quick-card-desc">Boundary halving conditions and search-on-answer space</div>
+          </div>
+
+          <div class="quick-card" data-prompt="Quiz me with an interview question on Binary Trees vs BST.">
+            <div class="card-header-row">
+              <span class="card-pill pill-purple">QUIZ DRILL</span>
+              <span class="card-complexity">FAANG Medium</span>
+            </div>
+            <div class="quick-card-title">Tree Drill Question <span class="card-arrow">&rarr;</span></div>
+            <div class="quick-card-desc">Interactive 4-choice interview question with intuition</div>
+          </div>
+
+          <div class="quick-card" data-prompt="What is the difference between BFS and DFS time and space complexity?">
+            <div class="card-header-row">
+              <span class="card-pill pill-green">GRAPHS</span>
+              <span class="card-complexity">O(V + E) Space</span>
+            </div>
+            <div class="quick-card-title">BFS vs DFS Comparison <span class="card-arrow">&rarr;</span></div>
+            <div class="quick-card-desc">Queue level-order vs recursion stack tradeoffs</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Chat Input Form -->
+    <div class="chat-input-area">
+      <div class="input-bar">
+        <textarea
+          id="chatInput"
+          class="chat-textarea"
+          rows="1"
+          placeholder="Ask a question, ask for a hint, or paste code to review..."
+        ></textarea>
+        <div class="input-actions">
+          <button class="mic-btn" id="micBtn" title="Voice input"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></button>
+          <button class="send-btn" id="sendBtn"><span>Send</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Right Panel: Code Sandbox, Algorithm Visualizer, Drills -->
+  <aside class="sandbox-pane" id="sandboxPane">
+    <div class="sandbox-tabs">
+      <button class="sandbox-tab active" data-tab="editor">Playground</button>
+      <button class="sandbox-tab" data-tab="visualizer">Visualizer</button>
+      <button class="sandbox-tab" data-tab="drills">Flashcards</button>
+      <button class="sandbox-tab" data-tab="cheatsheet">Notes</button>
+    </div>
+
+    <div class="sandbox-content">
+
+      <!-- Tab 1: Python Playground -->
+      <div class="tab-view active" id="tab-editor">
+        <div class="editor-header">
+          <select class="template-select" id="templateSelect">
+            <option value="twosum">Two Sum (Hash Map)</option>
+            <option value="binsearch">Binary Search</option>
+            <option value="invert_tree">Invert Binary Tree</option>
+            <option value="valid_parentheses">Valid Parentheses (Stack)</option>
+            <option value="reverse_ll">Reverse Linked List</option>
+            <option value="custom">Custom Template</option>
+          </select>
+          <div class="editor-actions">
+            <button class="btn-review" id="reviewEditorBtn">Review with AI</button>
+            <button class="btn-run" id="runCodeBtn">▶ Run</button>
+          </div>
+        </div>
+        <textarea class="code-editor-textarea" id="codeEditor" spellcheck="false"></textarea>
+        <div class="terminal-box">
+          <div class="terminal-header">
+            <span>TERMINAL OUTPUT</span>
+            <span id="termTiming">Ready</span>
+          </div>
+          <div class="terminal-output" id="terminalOutput">Click "▶ Run" to execute code against Python.</div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Algorithm Visualizer Hub -->
+      <div class="tab-view" id="tab-visualizer">
+        <div class="visualizer-container">
+          <div class="vis-header-bar">
+            <select class="vis-algo-select" id="visAlgoSelect">
+              <option value="binsearch">Binary Search (Range Halving)</option>
+              <option value="twopointers">Two Pointers (Inward Pair Sum)</option>
+              <option value="slidingwindow">Sliding Window (Max Subarray)</option>
+              <option value="tree">Binary Tree Traversal (Inorder / BFS)</option>
+              <option value="stackqueue">Stack & Queue Simulator (LIFO / FIFO)</option>
+            </select>
+          </div>
+
+          <!-- Sub-Panel 1: Binary Search -->
+          <div class="vis-sub-panel active" id="subvis-binsearch">
+            <div class="vis-controls">
+              <button class="vis-btn" id="visReset">↺ Reset</button>
+              <button class="vis-btn" id="visStep">Next Step</button>
+              <button class="vis-btn" id="visNewTarget">New Target</button>
+            </div>
+            <div class="vis-display-box">
+              <div style="font-size: 0.90rem; color: var(--text-muted); font-weight: 600;">
+                Target: <b id="visTargetVal" style="color: var(--accent); font-size: 1rem;">17</b>
+              </div>
+              <div class="vis-array" id="visArrayCells"></div>
+            </div>
+            <div class="vis-status-text" id="visStatus">
+              Click "Next Step" to start searching the sorted array.
+            </div>
+          </div>
+
+          <!-- Sub-Panel 2: Two Pointers -->
+          <div class="vis-sub-panel" id="subvis-twopointers">
+            <div class="vis-controls">
+              <button class="vis-btn" id="tpReset">↺ Reset</button>
+              <button class="vis-btn" id="tpStep">Next Step</button>
+              <button class="vis-btn" id="tpNewTarget">New Target</button>
+            </div>
+            <div class="vis-display-box">
+              <div style="font-size: 0.90rem; color: var(--text-muted); font-weight: 600;">
+                Target Sum: <b id="tpTargetVal" style="color: var(--accent); font-size: 1rem;">25</b>
+              </div>
+              <div class="vis-array" id="tpArrayCells" style="position:relative; padding-bottom: 24px; padding-top: 24px;"></div>
+            </div>
+            <div class="vis-status-text" id="tpStatus">
+              Two Pointers initialized at left (0) and right (end). Click "Next Step".
+            </div>
+          </div>
+
+          <!-- Sub-Panel 3: Sliding Window -->
+          <div class="vis-sub-panel" id="subvis-slidingwindow">
+            <div class="vis-controls">
+              <button class="vis-btn" id="swReset">↺ Reset</button>
+              <button class="vis-btn" id="swStep">Slide Window</button>
+              <span style="font-size: 0.84rem; color: var(--text-muted);">Size K = 3</span>
+            </div>
+            <div class="vis-display-box">
+              <div class="vis-array" id="swArrayCells"></div>
+              <div style="display:flex; gap:16px; font-size:0.92rem; font-weight:700; font-family: 'Sora', 'Space Grotesk', sans-serif;">
+                <span>Current Window Sum: <b id="swCurrSum" style="color:var(--accent);">--</b></span>
+                <span>Max Sum Found: <b id="swMaxSum" style="color:var(--success);">--</b></span>
+              </div>
+            </div>
+            <div class="vis-status-text" id="swStatus">
+              Click "Slide Window" to calculate running subarray sums in O(N).
+            </div>
+          </div>
+
+          <!-- Sub-Panel 4: Binary Tree Traversal -->
+          <div class="vis-sub-panel" id="subvis-tree">
+            <div class="vis-controls">
+              <select class="vis-btn" id="treeTraversalMode" style="outline:none;">
+                <option value="inorder">In-Order (Left → Root → Right)</option>
+                <option value="preorder">Pre-Order (Root → Left → Right)</option>
+                <option value="bfs">Level-Order / BFS (Queue)</option>
+              </select>
+              <button class="vis-btn" id="treeReset">↺ Reset</button>
+              <button class="vis-btn" id="treeStep">Next Node</button>
+            </div>
+            <div class="vis-display-box">
+              <div class="tree-svg-wrap">
+                <svg width="260" height="150" viewBox="0 0 260 150">
+                  <line x1="130" y1="25" x2="70" y2="75" stroke="var(--panel-border)" stroke-width="2" />
+                  <line x1="130" y1="25" x2="190" y2="75" stroke="var(--panel-border)" stroke-width="2" />
+                  <line x1="70" y1="75" x2="40" y2="125" stroke="var(--panel-border)" stroke-width="2" />
+                  <line x1="70" y1="75" x2="100" y2="125" stroke="var(--panel-border)" stroke-width="2" />
+                  <line x1="190" y1="75" x2="160" y2="125" stroke="var(--panel-border)" stroke-width="2" />
+                  <line x1="190" y1="75" x2="220" y2="125" stroke="var(--panel-border)" stroke-width="2" />
+
+                  <!-- Node 4 -->
+                  <circle id="tn-4" cx="130" cy="25" r="16" fill="var(--panel)" stroke="var(--accent)" stroke-width="2" class="tree-node-circle" />
+                  <text x="130" y="30" fill="var(--text)" font-family="JetBrains Mono" font-size="12" font-weight="700" text-anchor="middle">4</text>
+
+                  <!-- Node 2 -->
+                  <circle id="tn-2" cx="70" cy="75" r="15" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="2" class="tree-node-circle" />
+                  <text x="70" y="80" fill="var(--text)" font-family="JetBrains Mono" font-size="12" font-weight="700" text-anchor="middle">2</text>
+
+                  <!-- Node 6 -->
+                  <circle id="tn-6" cx="190" cy="75" r="15" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="2" class="tree-node-circle" />
+                  <text x="190" y="80" fill="var(--text)" font-family="JetBrains Mono" font-size="12" font-weight="700" text-anchor="middle">6</text>
+
+                  <!-- Leaves -->
+                  <circle id="tn-1" cx="40" cy="125" r="13" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="2" class="tree-node-circle" />
+                  <text x="40" y="129" fill="var(--text)" font-family="JetBrains Mono" font-size="11" font-weight="700" text-anchor="middle">1</text>
+
+                  <circle id="tn-3" cx="100" cy="125" r="13" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="2" class="tree-node-circle" />
+                  <text x="100" y="129" fill="var(--text)" font-family="JetBrains Mono" font-size="11" font-weight="700" text-anchor="middle">3</text>
+
+                  <circle id="tn-5" cx="160" cy="125" r="13" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="2" class="tree-node-circle" />
+                  <text x="160" y="129" fill="var(--text)" font-family="JetBrains Mono" font-size="11" font-weight="700" text-anchor="middle">5</text>
+
+                  <circle id="tn-7" cx="220" cy="125" r="13" fill="var(--panel)" stroke="var(--panel-border)" stroke-width="2" class="tree-node-circle" />
+                  <text x="220" y="129" fill="var(--text)" font-family="JetBrains Mono" font-size="11" font-weight="700" text-anchor="middle">7</text>
+                </svg>
+              </div>
+              <div style="font-size:0.88rem; color:var(--text-muted);">
+                Visited Sequence: <b id="treeVisitedSequence" style="color:var(--accent); font-family:JetBrains Mono;">[]</b>
+              </div>
+            </div>
+            <div class="vis-status-text" id="treeStatus">
+              Select traversal order and click "Next Node" to step through.
+            </div>
+          </div>
+
+          <!-- Sub-Panel 5: Stack & Queue Simulator -->
+          <div class="vis-sub-panel" id="subvis-stackqueue">
+            <div class="vis-controls">
+              <button class="vis-btn" id="sqPushStack">Push Stack (LIFO)</button>
+              <button class="vis-btn" id="sqPopStack">Pop Stack</button>
+              <button class="vis-btn" id="sqEnqueue">Enqueue Queue (FIFO)</button>
+              <button class="vis-btn" id="sqDequeue">Dequeue Queue</button>
+            </div>
+            <div class="vis-display-box" style="flex-direction:row; justify-content:space-around; align-items:flex-end; min-height:160px;">
+              <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+                <span style="font-size:0.84rem; font-weight:700; color:var(--accent);">STACK (LIFO)</span>
+                <div class="stack-container" id="stackBox"></div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; max-width:200px;">
+                <span style="font-size:0.84rem; font-weight:700; color:var(--warning);">QUEUE (FIFO)</span>
+                <div class="queue-container" id="queueBox"></div>
+              </div>
+            </div>
+            <div class="vis-status-text" id="sqStatus">
+              Click Push/Pop or Enqueue/Dequeue to see LIFO vs FIFO in action.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab 3: Flashcards Drill -->
+      <div class="tab-view" id="tab-drills">
+        <div class="drill-container">
+          <!-- Daily Header & Streak -->
+          <div class="drill-header">
+            <div class="streak-badge">
+              <span class="streak-dot"></span>
+              <span id="streakCount">1 Day Streak</span>
+            </div>
+            <div class="date-badge" id="cardDateBadge">Today's Daily Drill</div>
+          </div>
+
+          <!-- Deck Picker & AI Generator -->
+          <div class="drill-deck-bar">
+            <select class="deck-select" id="deckTopicSelect">
+              <option value="daily">Today's Daily Deck (Rotating)</option>
+              <option value="Trees & BST">Trees & BST</option>
+              <option value="Heaps">Heaps & Priority Queues</option>
+              <option value="Graphs">Graphs & Traversals</option>
+              <option value="Arrays & Pointers">Arrays & Two Pointers</option>
+              <option value="Sliding Window">Sliding Window</option>
+              <option value="Binary Search">Binary Search</option>
+              <option value="Linked Lists">Linked Lists</option>
+              <option value="Dynamic Programming">Dynamic Programming</option>
+              <option value="Bit Manipulation">Bit Manipulation</option>
+            </select>
+            <button class="btn-gen-cards" id="genAiCardsBtn">New Deck</button>
+          </div>
+
+          <div class="drill-progress-bar">
+            <div class="drill-progress-fill" id="drillProgressFill"></div>
+          </div>
+
+          <!-- The Interactive Flip Flashcard -->
+          <div class="flashcard-wrapper" id="flashcardWrap">
+            <div class="flashcard" id="flashcard">
+              <!-- FRONT -->
+              <div class="flashcard-face flashcard-front">
+                <div class="card-top-meta">
+                  <span class="card-topic-tag" id="cardTopicTag">Trees</span>
+                  <span class="card-diff-tag Medium" id="cardDiffTag">Medium</span>
+                  <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 800;">
+                    Card <span id="cardNum">1/5</span>
+                  </span>
+                </div>
+                <p id="cardQuestion" style="font-family: 'Sora', 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; line-height: 1.48; color: var(--text);">
+                  Loading today's fresh interview questions...
+                </p>
+                <div style="font-size: 0.84rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
+                  <span>Click or press Space to flip</span>
+                  <span style="color: var(--text-muted);">Space to flip</span>
+                </div>
+              </div>
+
+              <!-- BACK -->
+              <div class="flashcard-face flashcard-back">
+                <div class="card-top-meta">
+                  <span style="font-size: 0.82rem; color: var(--success); font-weight: 800; text-transform: uppercase;">
+                    Answer & Intuition
+                  </span>
+                  <span id="cardMasteredStatus" style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted);"></span>
+                </div>
+                <p id="cardAnswer" style="font-family: 'Outfit', sans-serif; font-size: 1.02rem; font-weight: 500; line-height: 1.6; color: var(--text); overflow-y: auto; max-height: 105px;">
+                  ...
+                </p>
+                <div class="takeaway-box" id="cardTakeawayBox">
+                  <b>Key Takeaway:</b> <span id="cardTakeaway">...</span>
+                </div>
+                <div class="card-back-actions">
+                  <button class="btn-card-action ask" id="cardAskTutorBtn">Explain with AI</button>
+                  <button class="btn-card-action master" id="cardMasterBtn">Mastered</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="drill-completion-msg" id="drillCompleteMsg">
+            Awesome job! You finished today's daily interview drill! Streak updated!
+          </div>
+
+          <!-- Controls -->
+          <div class="drill-controls">
+            <button class="drill-btn" id="prevCardBtn">◀ Prev</button>
+            <button class="drill-btn" id="flipCardBtn">Flip Card</button>
+            <button class="drill-btn" id="nextCardBtn">Next ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Raw Notes / Cheatsheet -->
+      <div class="tab-view" id="tab-cheatsheet">
+        <div class="cheatsheet-view">
+          <div class="cheatsheet-content" id="cheatsheetContent">
+            <p style="color: var(--text-muted);">Select a topic from the sidebar and click "Cheat Sheet" to view instant study notes here.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+</div>
+
+<script>
+/* ---------- State Management ---------- */
+let currentSessionId = "sess_" + Math.random().toString(36).substring(2, 9);
+let currentMode = "auto";
+let activeModel = "llama3.2:3b";
+let isBusy = false;
+let abortController = null;
+let speechSynth = window.speechSynthesis || null;
+let readAloudEnabled = false;
+
+/* Elements */
+const appRoot = document.getElementById("appRoot");
+const chatMessages = document.getElementById("chatMessages");
+const welcomeScreen = document.getElementById("welcomeScreen");
+const chatInput = document.getElementById("chatInput");
+const sendBtn = document.getElementById("sendBtn");
+const micBtn = document.getElementById("micBtn");
+const topicsList = document.getElementById("topicsList");
+const modelSelector = document.getElementById("modelSelector");
+const codeEditor = document.getElementById("codeEditor");
+const terminalOutput = document.getElementById("terminalOutput");
+const termTiming = document.getElementById("termTiming");
+const runCodeBtn = document.getElementById("runCodeBtn");
+const reviewEditorBtn = document.getElementById("reviewEditorBtn");
+const templateSelect = document.getElementById("templateSelect");
+const cheatsheetContent = document.getElementById("cheatsheetContent");
+
+/* Code Starter Templates */
+const TEMPLATES = {
+  twosum: `def two_sum(nums, target):
+    # O(n) time, O(n) space using hashmap
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+
+# Test cases:
+nums = [2, 7, 11, 15]
+target = 9
+print("Input:", nums, "Target:", target)
+print("Result indices:", two_sum(nums, target))`,
+
+  binsearch: `def binary_search(nums, target):
+    lo, hi = 0, len(nums) - 1
+    while lo <= hi:
+        mid = lo + (hi - lo) // 2
+        if nums[mid] == target:
+            return mid
+        elif nums[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+
+nums = [1, 3, 5, 7, 9, 11, 13, 17]
+print("Array:", nums)
+print("Index of 7:", binary_search(nums, 7))
+print("Index of 10:", binary_search(nums, 10))`,
+
+  invert_tree: `class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+def invert_tree(root):
+    if not root:
+        return None
+    root.left, root.right = invert_tree(root.right), invert_tree(root.left)
+    return root
+
+# Build sample tree: [4, 2, 7]
+root = TreeNode(4, TreeNode(2), TreeNode(7))
+print("Root before:", root.val, "Left:", root.left.val, "Right:", root.right.val)
+inverted = invert_tree(root)
+print("Root after: ", inverted.val, "Left:", inverted.left.val, "Right:", inverted.right.val)`,
+
+  valid_parentheses: `def is_valid(s: str) -> bool:
+    stack = []
+    mapping = {")": "(", "}": "{", "]": "["}
+    for char in s:
+        if char in mapping:
+            top = stack.pop() if stack else '#'
+            if mapping[char] != top:
+                return False
+        else:
+            stack.append(char)
+    return not stack
+
+print("Test '()[]{}':", is_valid("()[]{}"))
+print("Test '(]':", is_valid("(]"))`,
+
+  reverse_ll: `class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def reverse_list(head):
+    prev, curr = None, head
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+    return prev
+
+# Create 1 -> 2 -> 3
+head = ListNode(1, ListNode(2, ListNode(3)))
+rev = reverse_list(head)
+vals = []
+while rev:
+    vals.append(rev.val)
+    rev = rev.next
+print("Reversed list:", vals)`,
+
+  custom: `# Write any Python DSA code here and click Run!
+print("Hello DSA Studio!")`
+};
+
+/* Set Initial Editor Template */
+codeEditor.value = TEMPLATES.twosum;
+templateSelect.addEventListener("change", (e) => {
+  if (TEMPLATES[e.target.value]) {
+    codeEditor.value = TEMPLATES[e.target.value];
+  }
+});
+
+/* Tab Switching */
+document.querySelectorAll(".sandbox-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".sandbox-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+    tab.classList.add("active");
+    const target = document.getElementById("tab-" + tab.dataset.tab);
+    if (target) target.classList.add("active");
+  });
+});
+
+/* Mode Switching */
+const MODE_CONFIGS = {
+  auto: {
+    placeholder: "Ask any question, paste code to review, or ask for a hint..."
+  },
+  hint: {
+    placeholder: "Hint Mode: Enter a problem name for a clue without code spoilers..."
+  },
+  review: {
+    placeholder: "Code Review Mode: Paste your Python code here to check for bugs and Big-O...",
+    onSelect: () => {
+      // Smoothly opens the right playground tab & focuses the editor
+      appRoot.classList.remove("sandbox-collapsed");
+      document.getElementById("toggleSandbox").classList.add("active");
+      document.querySelectorAll(".sandbox-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+      const tabBtn = document.querySelector('[data-tab="editor"]');
+      if (tabBtn) tabBtn.classList.add("active");
+      document.getElementById("tab-editor").classList.add("active");
+      codeEditor.focus();
+    }
+  },
+  detailed: {
+    placeholder: "Deep Dive Mode: Ask for an in-depth walkthrough of any algorithm..."
+  },
+  code: {
+    placeholder: "Solution Mode: Enter problem name to generate optimal Python solution..."
+  },
+  quiz: {
+    placeholder: "Interview Quiz Mode: Ask for an interview drill question...",
+    onSelect: () => {
+      sendUserMessage("Give me a challenging interview quiz question on Arrays and Hash Maps with 4 options A, B, C, D.");
+    }
+  }
+};
+
+function activateMode(modeKey) {
+  currentMode = modeKey;
+  const cfg = MODE_CONFIGS[modeKey] || MODE_CONFIGS.auto;
+
+  // Clean, context-sensitive placeholder update
+  chatInput.placeholder = cfg.placeholder;
+  chatInput.focus();
+
+  // Screen movement callback if defined
+  if (cfg.onSelect) cfg.onSelect();
+}
+
+
+document.querySelectorAll(".mode-pill").forEach(pill => {
+  pill.addEventListener("click", () => {
+    document.querySelectorAll(".mode-pill").forEach(p => p.classList.remove("active"));
+    pill.classList.add("active");
+    activateMode(pill.dataset.mode);
+  });
+});
+
+// Initialize with auto mode
+activateMode("auto");
+
+/* Toggle Sidebars */
+document.getElementById("toggleSidebar").addEventListener("click", () => {
+  appRoot.classList.toggle("sidebar-collapsed");
+});
+document.getElementById("toggleSandbox").addEventListener("click", (e) => {
+  appRoot.classList.toggle("sandbox-collapsed");
+  e.currentTarget.classList.toggle("active");
+});
+
+/* Dark/Light Theme */
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("dsa_theme", next);
+});
+
+/* Read-Aloud Toggle */
+document.getElementById("voiceToggle").addEventListener("click", (e) => {
+  readAloudEnabled = !readAloudEnabled;
+  e.currentTarget.classList.toggle("active", readAloudEnabled);
+  if (!readAloudEnabled && speechSynth) speechSynth.cancel();
+});
+
+/* Load Models from Backend */
+let hasGroqKey = false;
+async function loadModels() {
+  try {
+    const res = await fetch("/api/models");
+    if (!res.ok) return;
+    const data = await res.json();
+    activeModel = data.current;
+    hasGroqKey = Boolean(data.has_groq);
+    modelSelector.innerHTML = "";
+    (data.available || [data.current]).forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      if (m.startsWith(data.current) || m === data.current) opt.selected = true;
+      modelSelector.appendChild(opt);
+    });
+    const shortName = activeModel.includes("llama-3.3") ? "Llama 3.3 (Cloud)" : (activeModel.includes("llama-3.1") ? "Llama 3.1 (Cloud)" : activeModel.split(" ")[0]);
+    document.getElementById("statusTag").innerHTML = `<span class="status-live-dot"></span> ${shortName}`;
+  } catch (err) {
+    console.warn("Could not load models list:", err);
+  }
+}
+loadModels();
+
+modelSelector.addEventListener("change", async (e) => {
+  activeModel = e.target.value;
+  const shortName = activeModel.includes("llama-3.3") ? "Llama 3.3 (Cloud)" : (activeModel.includes("llama-3.1") ? "Llama 3.1 (Cloud)" : activeModel.split(" ")[0]);
+  document.getElementById("statusTag").innerHTML = `<span class="status-live-dot"></span> ${shortName}`;
+  try {
+    await fetch("/api/set-model", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: activeModel })
+    });
+  } catch (err) {
+    console.error("Failed to switch model:", err);
+  }
+});
+
+/* Load Topics from Backend */
+async function loadTopics() {
+  try {
+    const res = await fetch("/api/topics");
+    if (!res.ok) return;
+    const data = await res.json();
+    renderTopics(data.categories || []);
+  } catch (err) {
+    console.error("Failed to load topics:", err);
+  }
+}
+loadTopics();
+
+let cachedCategories = [];
+function renderTopics(categories, filter = "") {
+  cachedCategories = categories;
+  topicsList.innerHTML = "";
+  const q = filter.toLowerCase().trim();
+
+  categories.forEach(cat => {
+    const filteredTopics = cat.topics.filter(t => 
+      !q || t.title.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)
+    );
+    if (!filteredTopics.length) return;
+
+    const group = document.createElement("div");
+    group.className = "category-group";
+
+    const titleEl = document.createElement("div");
+    titleEl.className = "category-title";
+    titleEl.innerHTML = `<span class="cat-bullet"></span> <span>${cat.title}</span>`;
+    group.appendChild(titleEl);
+
+    filteredTopics.forEach(t => {
+      const item = document.createElement("button");
+      item.className = "topic-item";
+      item.innerHTML = `
+        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${t.title}</span>
+        <div class="topic-actions">
+          <span class="mini-btn" title="View Study Note" data-path="${t.path}">Notes</span>
+        </div>
+      `;
+
+      item.addEventListener("click", (e) => {
+        if (e.target.classList.contains("mini-btn")) {
+          e.stopPropagation();
+          openCheatSheet(e.target.dataset.path);
+        } else {
+          sendUserMessage(`Explain ${t.title} and the key problem pattern.`);
+        }
+      });
+      group.appendChild(item);
+    });
+
+    topicsList.appendChild(group);
+  });
+}
+
+document.getElementById("topicSearch").addEventListener("input", (e) => {
+  renderTopics(cachedCategories, e.target.value);
+});
+
+/* Open Raw Note Cheatsheet in Right Tab */
+async function openCheatSheet(path) {
+  try {
+    const res = await fetch("/api/topic/" + encodeURIComponent(path));
+    if (!res.ok) throw new Error("Could not load note");
+    const data = await res.json();
+    cheatsheetContent.innerHTML = formatMarkdown(data.content);
+    // Switch to cheatsheet tab
+    document.querySelectorAll(".sandbox-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+    const tabBtn = document.querySelector('[data-tab="cheatsheet"]');
+    if (tabBtn) tabBtn.classList.add("active");
+    document.getElementById("tab-cheatsheet").classList.add("active");
+    // Ensure sandbox open
+    appRoot.classList.remove("sandbox-collapsed");
+    document.getElementById("toggleSandbox").classList.add("active");
+  } catch (err) {
+    cheatsheetContent.innerHTML = `<p style="color:var(--danger)">Error: ${err.message}</p>`;
+  }
+}
+
+/* Quick Card Prompts */
+document.querySelectorAll(".quick-card").forEach(card => {
+  card.addEventListener("click", () => {
+    const prompt = card.dataset.prompt;
+    if (prompt) sendUserMessage(prompt);
+  });
+});
+
+/* Run Code Execution */
+runCodeBtn.addEventListener("click", async () => {
+  const code = codeEditor.value;
+  terminalOutput.textContent = "Running Python script...";
+  terminalOutput.className = "terminal-output";
+  termTiming.textContent = "Executing...";
+
+  try {
+    const res = await fetch("/api/run-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code, timeout: 5.0 })
+    });
+    const data = await res.json();
+    termTiming.textContent = `${data.time_ms || 0} ms`;
+
+    if (data.stderr) {
+      terminalOutput.textContent = data.stderr + (data.stdout ? "\n" + data.stdout : "");
+      terminalOutput.className = "terminal-output error";
+    } else {
+      terminalOutput.textContent = data.stdout || "(Code executed cleanly with no output)";
+      terminalOutput.className = "terminal-output success";
+    }
+  } catch (err) {
+    terminalOutput.textContent = "Execution failed: " + err.message;
+    terminalOutput.className = "terminal-output error";
+    termTiming.textContent = "Error";
+  }
+});
+
+/* Review Code in Editor with AI */
+reviewEditorBtn.addEventListener("click", () => {
+  const code = codeEditor.value;
+  const prompt = `Review my code below for bugs, edge cases, time/space complexity, and improvements:\n\n\`\`\`python\n${code}\n\`\`\``;
+  // Set mode to review
+  document.querySelectorAll(".mode-pill").forEach(p => p.classList.remove("active"));
+  const revPill = document.querySelector('[data-mode="review"]');
+  if (revPill) revPill.classList.add("active");
+  currentMode = "review";
+  sendUserMessage(prompt);
+});
+
+/* ---------- Markdown & Code Formatter ---------- */
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function formatMarkdown(text) {
+  if (!text) return "";
+  let html = "";
+  const parts = text.split(/(```[\s\S]*?```)/g);
+
+  parts.forEach(part => {
+    if (part.startsWith("```")) {
+      const match = part.match(/^```([a-zA-Z0-9_-]*)\n([\s\S]*?)```$/);
+      const lang = match ? match[1] || "python" : "text";
+      const code = match ? match[2].trim() : part.slice(3, -3).trim();
+      const escaped = escapeHtml(code);
+      html += `
+        <div class="code-block-container">
+          <div class="code-block-header">
+            <span>${lang.toUpperCase()}</span>
+            <div class="code-block-actions">
+              <button class="code-action-btn" onclick="sendToSandbox(this)">To Sandbox</button>
+              <button class="code-action-btn" onclick="copyCode(this)">Copy</button>
+            </div>
+          </div>
+          <pre><code>${escaped}</code></pre>
+        </div>
+      `;
+    } else {
+      let t = escapeHtml(part);
+      // Headings
+      t = t.replace(/^### (.*$)/gim, '<h3 style="font-family: Space Grotesk, sans-serif; font-size: 1.15rem; margin: 10px 0 4px; color: var(--text); font-weight: 700;">$1</h3>');
+      t = t.replace(/^## (.*$)/gim, '<h2 style="font-family: Space Grotesk, sans-serif; font-size: 1.32rem; margin: 12px 0 6px; color: var(--accent); font-weight: 700;">$1</h2>');
+      t = t.replace(/^# (.*$)/gim, '<h1 style="font-family: Space Grotesk, sans-serif; font-size: 1.55rem; margin: 14px 0 8px; color: var(--accent); font-weight: 800;">$1</h1>');
+      // Bold
+      t = t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      // Inline code
+      t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Bullets
+      t = t.replace(/^\s*[-*]\s+(.*)$/gim, '<li>$1</li>');
+      t = t.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+      // Paragraphs
+      t = t.replace(/\n\n+/g, '</p><p>');
+      t = '<p>' + t + '</p>';
+      html += t;
+    }
+  });
+
+  return html;
+}
+
+window.copyCode = function(btn) {
+  const code = btn.closest(".code-block-container").querySelector("pre code").innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+};
+
+window.sendToSandbox = function(btn) {
+  const code = btn.closest(".code-block-container").querySelector("pre code").innerText;
+  codeEditor.value = code;
+  // Switch to playground tab & open right pane
+  document.querySelectorAll(".sandbox-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-view").forEach(v => v.classList.remove("active"));
+  const tabBtn = document.querySelector('[data-tab="editor"]');
+  if (tabBtn) tabBtn.classList.add("active");
+  document.getElementById("tab-editor").classList.add("active");
+  appRoot.classList.remove("sandbox-collapsed");
+  document.getElementById("toggleSandbox").classList.add("active");
+};
+
+/* Speech Synthesizer */
+function speakText(text) {
+  if (!speechSynth || !readAloudEnabled) return;
+  speechSynth.cancel();
+  // Strip code blocks and markdown symbols for audio
+  const clean = text.replace(/```[\s\S]*?```/g, "Code block omitted.")
+                    .replace(/[*#`_]/g, "")
+                    .replace(/https?:\/\/\S+/g, "");
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.rate = 1.05;
+  speechSynth.speak(utterance);
+}
+
+/* Chat Streaming */
+async function sendUserMessage(msgText) {
+  const text = (msgText || chatInput.value).trim();
+  if (!text || isBusy) return;
+
+  if (speechSynth) speechSynth.cancel();
+  chatInput.value = "";
+  chatInput.style.height = "auto";
+  welcomeScreen.hidden = true;
+
+  // Render User Message
+  appendMessage("user", text);
+
+  // Render Bot Message Skeleton
+  const botEl = appendMessage("bot", "");
+  botEl.bubble.classList.add("streaming");
+  botEl.bubble.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">Thinking...</span>';
+
+  setBusyState(true);
+  abortController = new AbortController();
+  let fullAnswer = "";
+
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: currentSessionId,
+        message: text,
+        mode: currentMode !== "auto" ? currentMode : null,
+        model: activeModel,
+      }),
+      signal: abortController.signal
+    });
+
+    if (!res.ok) throw new Error("Server error HTTP " + res.status);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let newlineIdx;
+      while ((newlineIdx = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, newlineIdx).trim();
+        buffer = buffer.slice(newlineIdx + 1);
+        if (line) {
+          try {
+            const ev = JSON.parse(line);
+            if (ev.type === "meta") {
+              if (ev.sources && ev.sources.length) {
+                const srcBadge = document.createElement("span");
+                srcBadge.className = "msg-badge";
+                srcBadge.textContent = ev.sources[0].replace(".md", "");
+                botEl.badges.appendChild(srcBadge);
+              }
+              if (ev.mode) {
+                const modeBadge = document.createElement("span");
+                modeBadge.className = "msg-badge";
+                modeBadge.textContent = ev.mode.toUpperCase();
+                botEl.badges.appendChild(modeBadge);
+              }
+            } else if (ev.type === "token") {
+              fullAnswer += ev.text;
+              botEl.bubble.innerHTML = formatMarkdown(fullAnswer);
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+            } else if (ev.type === "error") {
+              botEl.bubble.innerHTML = `<span style="color:var(--danger)">Error: ${ev.text}</span>`;
+            }
+          } catch (e) {
+            console.error("NDJSON parse error:", e);
+          }
+        }
+      }
+    }
+
+    if (fullAnswer && readAloudEnabled) {
+      speakText(fullAnswer);
+    }
+
+  } catch (err) {
+    if (err.name === "AbortError") {
+      botEl.bubble.innerHTML += ` <span style="color:var(--warning);font-size:0.8rem;">[Stopped]</span>`;
+    } else {
+      botEl.bubble.innerHTML = `<span style="color:var(--danger)">Connection Error: ${err.message}. Make sure Ollama and backend server are running.</span>`;
+    }
+  } finally {
+    botEl.bubble.classList.remove("streaming");
+    setBusyState(false);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    chatInput.focus();
+  }
+}
+
+function appendMessage(role, text) {
+  const row = document.createElement("div");
+  row.className = `msg-row ${role}`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "msg-avatar";
+  avatar.textContent = role === "user" ? "YOU" : "</>";
+
+  const contentWrap = document.createElement("div");
+  contentWrap.className = "msg-content-wrapper";
+
+  const badges = document.createElement("div");
+  badges.className = "msg-badges";
+
+  const bubble = document.createElement("div");
+  bubble.className = "msg-bubble";
+  bubble.innerHTML = role === "user" ? escapeHtml(text) : formatMarkdown(text);
+
+  contentWrap.appendChild(badges);
+  contentWrap.appendChild(bubble);
+  row.appendChild(avatar);
+  row.appendChild(contentWrap);
+
+  chatMessages.appendChild(row);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  return { bubble, badges };
+}
+
+function setBusyState(busy) {
+  isBusy = busy;
+  if (busy) {
+    sendBtn.classList.add("stop");
+    sendBtn.textContent = "■ Stop";
+  } else {
+    sendBtn.classList.remove("stop");
+    sendBtn.innerHTML = `<span>Send</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
+  }
+}
+
+sendBtn.addEventListener("click", () => {
+  if (isBusy && abortController) {
+    abortController.abort();
+  } else {
+    sendUserMessage();
+  }
+});
+
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    if (!isBusy) sendUserMessage();
+  }
+});
+
+chatInput.addEventListener("input", () => {
+  chatInput.style.height = "auto";
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 180) + "px";
+});
+
+document.getElementById("newChatBtn").addEventListener("click", () => {
+  if (isBusy && abortController) abortController.abort();
+  currentSessionId = "sess_" + Math.random().toString(36).substring(2, 9);
+  chatMessages.innerHTML = "";
+  chatMessages.appendChild(welcomeScreen);
+  welcomeScreen.hidden = false;
+  chatInput.value = "";
+  chatInput.focus();
+});
+
+/* Microphone Speech Input */
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRec) {
+  const rec = new SpeechRec();
+  rec.continuous = false;
+  rec.interimResults = false;
+  let isListening = false;
+
+  micBtn.addEventListener("click", () => {
+    if (isListening) {
+      rec.stop();
+      return;
+    }
+    try {
+      rec.start();
+      isListening = true;
+      micBtn.classList.add("listening");
+    } catch (e) {
+      console.warn("SpeechRec error:", e);
+    }
+  });
+
+  rec.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    chatInput.value = (chatInput.value.trim() ? chatInput.value + " " : "") + transcript;
+    chatInput.focus();
+  };
+
+  rec.onend = () => {
+    isListening = false;
+    micBtn.classList.remove("listening");
+  };
+
+  rec.onerror = () => {
+    isListening = false;
+    micBtn.classList.remove("listening");
+  };
+} else {
+  micBtn.style.display = "none";
+}
+
+/* ---------- Multi-Topic Algorithm Visualizer Hub ---------- */
+const visAlgoSelect = document.getElementById("visAlgoSelect");
+visAlgoSelect.addEventListener("change", (e) => {
+  const chosen = e.target.value;
+  document.querySelectorAll(".vis-sub-panel").forEach(p => p.classList.remove("active"));
+  const target = document.getElementById("subvis-" + chosen);
+  if (target) target.classList.add("active");
+});
+
+/* 1. Binary Search Simulator */
+const visArr = [2, 5, 8, 11, 14, 17, 21, 26, 30, 35, 42, 50];
+let visTarget = 17;
+let visLo = 0;
+let visHi = visArr.length - 1;
+let visMid = -1;
+let visDone = false;
+
+function initVis() {
+  visLo = 0;
+  visHi = visArr.length - 1;
+  visMid = -1;
+  visDone = false;
+  renderVisArray();
+  document.getElementById("visTargetVal").textContent = visTarget;
+  document.getElementById("visStatus").textContent = `Initial search space: index 0 to ${visHi}. Click 'Next Step'.`;
+}
+
+function renderVisArray() {
+  const container = document.getElementById("visArrayCells");
+  container.innerHTML = "";
+  visArr.forEach((val, i) => {
+    const cell = document.createElement("div");
+    cell.className = "vis-cell";
+    cell.innerHTML = `<span>${val}</span><small>[${i}]</small>`;
+
+    if (visDone && i === visMid && val === visTarget) {
+      cell.classList.add("found");
+    } else if (i < visLo || i > visHi) {
+      cell.classList.add("discarded");
+    } else {
+      if (i === visLo) cell.classList.add("lo");
+      if (i === visHi) cell.classList.add("hi");
+      if (i === visMid) cell.classList.add("mid");
+    }
+    container.appendChild(cell);
+  });
+}
+
+document.getElementById("visStep").addEventListener("click", () => {
+  if (visDone) {
+    document.getElementById("visStatus").textContent = "Search complete! Click 'Reset' to start again.";
+    return;
+  }
+  if (visLo <= visHi) {
+    visMid = Math.floor(visLo + (visHi - visLo) / 2);
+    renderVisArray();
+
+    if (visArr[visMid] === visTarget) {
+      visDone = true;
+      renderVisArray();
+      document.getElementById("visStatus").innerHTML = `<b>Found ${visTarget} at index ${visMid}!</b> (Checked nums[${visMid}] == ${visTarget})`;
+    } else if (visArr[visMid] < visTarget) {
+      document.getElementById("visStatus").innerHTML = `nums[${visMid}] = ${visArr[visMid]} is <b>&lt; ${visTarget}</b>. Discard left half, move lo = ${visMid + 1}.`;
+      visLo = visMid + 1;
+    } else {
+      document.getElementById("visStatus").innerHTML = `nums[${visMid}] = ${visArr[visMid]} is <b>&gt; ${visTarget}</b>. Discard right half, move hi = ${visMid - 1}.`;
+      visHi = visMid - 1;
+    }
+  } else {
+    visDone = true;
+    document.getElementById("visStatus").innerHTML = `Target ${visTarget} not found in array (lo &gt; hi).`;
+    renderVisArray();
+  }
+});
+document.getElementById("visReset").addEventListener("click", initVis);
+document.getElementById("visNewTarget").addEventListener("click", () => {
+  visTarget = Math.random() > 0.3 ? visArr[Math.floor(Math.random() * visArr.length)] : Math.floor(Math.random() * 55);
+  initVis();
+});
+initVis();
+
+/* 2. Two Pointers Simulator (Arrays & Pair Sum) */
+const tpArr = [1, 3, 5, 8, 12, 17, 21, 26];
+let tpTarget = 25;
+let tpL = 0;
+let tpR = tpArr.length - 1;
+let tpDone = false;
+
+function initTwoPointers() {
+  tpL = 0;
+  tpR = tpArr.length - 1;
+  tpDone = false;
+  renderTwoPointers();
+  document.getElementById("tpTargetVal").textContent = tpTarget;
+  document.getElementById("tpStatus").textContent = `Two pointers initialized: L at index 0 (${tpArr[0]}), R at index ${tpR} (${tpArr[tpR]}). Click Next Step.`;
+}
+
+function renderTwoPointers() {
+  const container = document.getElementById("tpArrayCells");
+  container.innerHTML = "";
+  tpArr.forEach((val, i) => {
+    const cell = document.createElement("div");
+    cell.className = "vis-cell";
+    cell.innerHTML = `<span>${val}</span><small>[${i}]</small>`;
+
+    if (i === tpL) {
+      cell.classList.add("ptr-left");
+      cell.innerHTML += `<span class="ptr-tag l">L</span>`;
+    }
+    if (i === tpR) {
+      cell.classList.add("ptr-right");
+      cell.innerHTML += `<span class="ptr-tag r">R</span>`;
+    }
+    if (tpDone && (i === tpL || i === tpR)) {
+      cell.classList.add("found");
+    }
+    container.appendChild(cell);
+  });
+}
+
+document.getElementById("tpStep").addEventListener("click", () => {
+  if (tpDone) {
+    document.getElementById("tpStatus").textContent = "Pair search complete! Click 'Reset' to replay.";
+    return;
+  }
+  if (tpL < tpR) {
+    const currSum = tpArr[tpL] + tpArr[tpR];
+    renderTwoPointers();
+
+    if (currSum === tpTarget) {
+      tpDone = true;
+      renderTwoPointers();
+      document.getElementById("tpStatus").innerHTML = `<b>MATCH FOUND!</b> nums[${tpL}] (${tpArr[tpL]}) + nums[${tpR}] (${tpArr[tpR]}) == ${tpTarget}!`;
+    } else if (currSum < tpTarget) {
+      document.getElementById("tpStatus").innerHTML = `Sum is ${currSum} (<b>&lt; ${tpTarget}</b>). Need a larger sum, so move LEFT pointer rightward (L++).`;
+      tpL++;
+    } else {
+      document.getElementById("tpStatus").innerHTML = `Sum is ${currSum} (<b>&gt; ${tpTarget}</b>). Need a smaller sum, so move RIGHT pointer leftward (R--).`;
+      tpR--;
+    }
+  } else {
+    tpDone = true;
+    document.getElementById("tpStatus").innerHTML = `No two numbers in this array sum to ${tpTarget} (pointers met).`;
+    renderTwoPointers();
+  }
+});
+document.getElementById("tpReset").addEventListener("click", initTwoPointers);
+document.getElementById("tpNewTarget").addEventListener("click", () => {
+  const i1 = Math.floor(Math.random() * (tpArr.length - 1));
+  const i2 = i1 + 1 + Math.floor(Math.random() * (tpArr.length - 1 - i1));
+  tpTarget = Math.random() > 0.25 ? (tpArr[i1] + tpArr[i2]) : Math.floor(Math.random() * 40);
+  initTwoPointers();
+});
+initTwoPointers();
+
+/* 3. Sliding Window Simulator (Max Sum Subarray of size K=3) */
+const swArr = [2, 1, 5, 1, 3, 2, 8, 4];
+const swK = 3;
+let swIdx = 0;
+let swCurrSum = 0;
+let swMaxSum = 0;
+let swDone = false;
+
+function initSlidingWindow() {
+  swIdx = 0;
+  swDone = false;
+  swCurrSum = swArr.slice(0, swK).reduce((a, b) => a + b, 0);
+  swMaxSum = swCurrSum;
+  document.getElementById("swCurrSum").textContent = swCurrSum;
+  document.getElementById("swMaxSum").textContent = swMaxSum;
+  renderSlidingWindow();
+  document.getElementById("swStatus").textContent = `Window encompasses first ${swK} items: [${swArr.slice(0, swK).join(', ')}]. Initial sum = ${swCurrSum}.`;
+}
+
+function renderSlidingWindow() {
+  const container = document.getElementById("swArrayCells");
+  container.innerHTML = "";
+  swArr.forEach((val, i) => {
+    const cell = document.createElement("div");
+    cell.className = "vis-cell";
+    cell.innerHTML = `<span>${val}</span><small>[${i}]</small>`;
+    if (i >= swIdx && i < swIdx + swK) {
+      cell.classList.add("in-window");
+    }
+    container.appendChild(cell);
+  });
+}
+
+document.getElementById("swStep").addEventListener("click", () => {
+  if (swDone) {
+    document.getElementById("swStatus").textContent = `Window traversed entire array! Maximum sum found was ${swMaxSum}. Click Reset.`;
+    return;
+  }
+  if (swIdx + swK < swArr.length) {
+    const leaving = swArr[swIdx];
+    const entering = swArr[swIdx + swK];
+    swIdx++;
+    swCurrSum = swCurrSum - leaving + entering;
+    const isNewMax = swCurrSum > swMaxSum;
+    if (isNewMax) swMaxSum = swCurrSum;
+
+    document.getElementById("swCurrSum").textContent = swCurrSum;
+    document.getElementById("swMaxSum").textContent = swMaxSum;
+    renderSlidingWindow();
+
+    document.getElementById("swStatus").innerHTML = `Slid 1 step forward: Subtracted <b>${leaving}</b>, Added <b>${entering}</b>. Window is now [${swArr.slice(swIdx, swIdx + swK).join(', ')}]. Sum = <b>${swCurrSum}</b> ${isNewMax ? "(NEW MAX!)" : ""}`;
+  } else {
+    swDone = true;
+    document.getElementById("swStatus").innerHTML = `Finished traversal! The Maximum Subarray Sum of size ${swK} is <b>${swMaxSum}</b>.`;
+  }
+});
+document.getElementById("swReset").addEventListener("click", initSlidingWindow);
+initSlidingWindow();
+
+/* 4. Binary Tree Traversal Simulator */
+const TREE_SEQUENCES = {
+  inorder: {
+    order: [1, 2, 3, 4, 5, 6, 7],
+    desc: "In-Order Traversal visits: Left Subtree → Root → Right Subtree (Sorted in BST)"
+  },
+  preorder: {
+    order: [4, 2, 1, 3, 6, 5, 7],
+    desc: "Pre-Order Traversal visits: Root → Left Subtree → Right Subtree (Great for copying/serializing)"
+  },
+  bfs: {
+    order: [4, 2, 6, 1, 3, 5, 7],
+    desc: "Level-Order BFS visits nodes level by level using a queue"
+  }
+};
+
+let treeStepIdx = 0;
+function initTreeVis() {
+  treeStepIdx = 0;
+  document.querySelectorAll(".tree-node-circle").forEach(c => {
+    c.classList.remove("active-visit", "visited");
+    c.setAttribute("fill", "var(--panel)");
+  });
+  document.getElementById("treeVisitedSequence").textContent = "[]";
+  const mode = document.getElementById("treeTraversalMode").value;
+  document.getElementById("treeStatus").textContent = TREE_SEQUENCES[mode].desc + ". Click 'Next Node'.";
+}
+
+document.getElementById("treeTraversalMode").addEventListener("change", initTreeVis);
+document.getElementById("treeReset").addEventListener("click", initTreeVis);
+
+document.getElementById("treeStep").addEventListener("click", () => {
+  const mode = document.getElementById("treeTraversalMode").value;
+  const seq = TREE_SEQUENCES[mode].order;
+
+  if (treeStepIdx >= seq.length) {
+    document.getElementById("treeStatus").textContent = `Traversal complete for all ${seq.length} nodes! Click Reset to replay.`;
+    return;
+  }
+
+  if (treeStepIdx > 0) {
+    const prevNode = document.getElementById("tn-" + seq[treeStepIdx - 1]);
+    if (prevNode) {
+      prevNode.classList.remove("active-visit");
+      prevNode.classList.add("visited");
+    }
+  }
+
+  const currId = seq[treeStepIdx];
+  const currNode = document.getElementById("tn-" + currId);
+  if (currNode) {
+    currNode.classList.add("active-visit");
+  }
+
+  const visitedSoFar = seq.slice(0, treeStepIdx + 1);
+  document.getElementById("treeVisitedSequence").textContent = "[" + visitedSoFar.join(", ") + "]";
+  document.getElementById("treeStatus").innerHTML = `Visiting node <b>${currId}</b> (Step ${treeStepIdx + 1} of ${seq.length}).`;
+  treeStepIdx++;
+});
+initTreeVis();
+
+/* 5. Stack & Queue Simulator */
+let stackItems = ["A", "B"];
+let queueItems = ["1", "2"];
+
+function renderStackQueue() {
+  const sBox = document.getElementById("stackBox");
+  const qBox = document.getElementById("queueBox");
+  if (!sBox || !qBox) return;
+  sBox.innerHTML = "";
+  qBox.innerHTML = "";
+
+  stackItems.forEach((val) => {
+    const item = document.createElement("div");
+    item.className = "sq-item";
+    item.textContent = val;
+    sBox.appendChild(item);
+  });
+
+  queueItems.forEach((val) => {
+    const item = document.createElement("div");
+    item.className = "sq-item";
+    item.textContent = val;
+    qBox.appendChild(item);
+  });
+}
+
+document.getElementById("sqPushStack").addEventListener("click", () => {
+  if (stackItems.length >= 5) {
+    document.getElementById("sqStatus").textContent = "Stack overflow limit (max 5 items) for visualizer.";
+    return;
+  }
+  const nextChar = String.fromCharCode(65 + stackItems.length);
+  stackItems.push(nextChar);
+  renderStackQueue();
+  document.getElementById("sqStatus").innerHTML = `Pushed <b>${nextChar}</b> onto TOP of stack (LIFO).`;
+});
+
+document.getElementById("sqPopStack").addEventListener("click", () => {
+  if (!stackItems.length) {
+    document.getElementById("sqStatus").textContent = "Stack is empty (underflow)!";
+    return;
+  }
+  const popped = stackItems.pop();
+  renderStackQueue();
+  document.getElementById("sqStatus").innerHTML = `Popped <b>${popped}</b> from TOP of stack (Last In, First Out).`;
+});
+
+document.getElementById("sqEnqueue").addEventListener("click", () => {
+  if (queueItems.length >= 6) {
+    document.getElementById("sqStatus").textContent = "Queue is full (max 6 items) for visualizer.";
+    return;
+  }
+  const nextNum = (queueItems.length + 1).toString();
+  queueItems.push(nextNum);
+  renderStackQueue();
+  document.getElementById("sqStatus").innerHTML = `Enqueued <b>${nextNum}</b> to REAR of queue (FIFO).`;
+});
+
+document.getElementById("sqDequeue").addEventListener("click", () => {
+  if (!queueItems.length) {
+    document.getElementById("sqStatus").textContent = "Queue is empty!";
+    return;
+  }
+  const deq = queueItems.shift();
+  renderStackQueue();
+  document.getElementById("sqStatus").innerHTML = `Dequeued <b>${deq}</b> from FRONT of queue (First In, First Out).`;
+});
+renderStackQueue();
+
+/* ---------- Daily Persistent Flashcard Drills ---------- */
+let activeCards = [];
+let cardIdx = 0;
+const flashcard = document.getElementById("flashcard");
+const cardNum = document.getElementById("cardNum");
+const cardTopicTag = document.getElementById("cardTopicTag");
+const cardDiffTag = document.getElementById("cardDiffTag");
+const cardQuestion = document.getElementById("cardQuestion");
+const cardAnswer = document.getElementById("cardAnswer");
+const cardTakeaway = document.getElementById("cardTakeaway");
+const cardMasteredStatus = document.getElementById("cardMasteredStatus");
+const drillProgressFill = document.getElementById("drillProgressFill");
+const streakCount = document.getElementById("streakCount");
+const cardDateBadge = document.getElementById("cardDateBadge");
+const deckTopicSelect = document.getElementById("deckTopicSelect");
+const genAiCardsBtn = document.getElementById("genAiCardsBtn");
+const drillCompleteMsg = document.getElementById("drillCompleteMsg");
+const cardMasterBtn = document.getElementById("cardMasterBtn");
+const cardAskTutorBtn = document.getElementById("cardAskTutorBtn");
+
+function getStreakData() {
+  try {
+    const raw = localStorage.getItem("dsa_drill_streak");
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { streak: 1, lastDate: "", mastered: {} };
+}
+
+function saveStreakData(data) {
+  try {
+    localStorage.setItem("dsa_drill_streak", JSON.stringify(data));
+  } catch (e) {}
+}
+
+function updateStreakDisplay() {
+  const data = getStreakData();
+  const today = new Date().toISOString().split("T")[0];
+  if (data.lastDate && data.lastDate !== today) {
+    const last = new Date(data.lastDate);
+    const curr = new Date(today);
+    const diffDays = Math.round((curr - last) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) {
+      // Consecutive day
+    } else if (diffDays > 1) {
+      data.streak = 1;
+      saveStreakData(data);
+    }
+  }
+  streakCount.textContent = `${data.streak || 1} Day Streak`;
+}
+updateStreakDisplay();
+
+async function loadDailyFlashcards() {
+  try {
+    const res = await fetch("/api/flashcards/daily");
+    if (!res.ok) throw new Error("Could not load daily flashcards");
+    const data = await res.json();
+    activeCards = data.cards || [];
+    cardDateBadge.textContent = data.day_title || "Today's Daily Drill";
+    cardIdx = 0;
+    showCurrentCard();
+  } catch (err) {
+    console.error("Daily cards load error:", err);
+    cardQuestion.textContent = "Failed to load flashcards: " + err.message;
+  }
+}
+loadDailyFlashcards();
+
+function showCurrentCard() {
+  if (!activeCards.length) return;
+  const card = activeCards[cardIdx];
+  flashcard.classList.remove("flipped");
+
+  cardNum.textContent = `${cardIdx + 1}/${activeCards.length}`;
+  cardTopicTag.textContent = card.topic || "DSA";
+  cardDiffTag.textContent = card.difficulty || "Medium";
+  cardDiffTag.className = `card-diff-tag ${card.difficulty || "Medium"}`;
+  cardQuestion.textContent = card.question;
+  cardAnswer.textContent = card.answer;
+  cardTakeaway.textContent = card.takeaway || "Review core concept pattern.";
+
+  const progressPct = ((cardIdx + 1) / activeCards.length) * 100;
+  drillProgressFill.style.width = `${progressPct}%`;
+
+  const streakData = getStreakData();
+  const isMastered = streakData.mastered && streakData.mastered[card.id];
+  cardMasteredStatus.textContent = isMastered ? "Mastered" : "";
+  cardMasteredStatus.style.color = isMastered ? "var(--success)" : "var(--text-muted)";
+  cardMasterBtn.textContent = isMastered ? "Mastered" : "Mark Mastered";
+
+  if (cardIdx === activeCards.length - 1) {
+    recordDailyCompletion();
+  } else {
+    drillCompleteMsg.style.display = "none";
+  }
+}
+
+function recordDailyCompletion() {
+  const data = getStreakData();
+  const today = new Date().toISOString().split("T")[0];
+  if (data.lastDate !== today) {
+    if (data.lastDate) {
+      const last = new Date(data.lastDate);
+      const curr = new Date(today);
+      const diffDays = Math.round((curr - last) / (1000 * 60 * 60 * 24));
+      data.streak = diffDays === 1 ? (data.streak || 1) + 1 : 1;
+    } else {
+      data.streak = 1;
+    }
+    data.lastDate = today;
+    saveStreakData(data);
+    updateStreakDisplay();
+  }
+  drillCompleteMsg.style.display = "block";
+}
+
+document.getElementById("flashcardWrap").addEventListener("click", () => {
+  flashcard.classList.toggle("flipped");
+});
+document.getElementById("flipCardBtn").addEventListener("click", () => {
+  flashcard.classList.toggle("flipped");
+});
+document.getElementById("nextCardBtn").addEventListener("click", () => {
+  if (!activeCards.length) return;
+  cardIdx = (cardIdx + 1) % activeCards.length;
+  showCurrentCard();
+});
+document.getElementById("prevCardBtn").addEventListener("click", () => {
+  if (!activeCards.length) return;
+  cardIdx = (cardIdx - 1 + activeCards.length) % activeCards.length;
+  showCurrentCard();
+});
+
+cardMasterBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!activeCards.length) return;
+  const card = activeCards[cardIdx];
+  const data = getStreakData();
+  data.mastered = data.mastered || {};
+  data.mastered[card.id] = !data.mastered[card.id];
+  saveStreakData(data);
+  showCurrentCard();
+});
+
+cardAskTutorBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!activeCards.length) return;
+  const card = activeCards[cardIdx];
+  const prompt = `Can you walk me through this interview question in detail with intuition, edge cases, and an example?\n\n"${card.question}"`;
+  sendUserMessage(prompt);
+});
+
+deckTopicSelect.addEventListener("change", async (e) => {
+  const val = e.target.value;
+  if (val === "daily") {
+    loadDailyFlashcards();
+  } else {
+    generateNewDeck(val);
+  }
+});
+
+genAiCardsBtn.addEventListener("click", () => {
+  const topic = deckTopicSelect.value === "daily" ? "general interview questions" : deckTopicSelect.value;
+  generateNewDeck(topic);
+});
+
+async function generateNewDeck(topic) {
+  genAiCardsBtn.textContent = "Generating...";
+  genAiCardsBtn.disabled = true;
+  cardQuestion.textContent = `Generating 5 fresh interview flashcards for ${topic}...`;
+  flashcard.classList.remove("flipped");
+
+  try {
+    const res = await fetch("/api/flashcards/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: topic, count: 5 })
+    });
+    if (!res.ok) throw new Error("Could not generate deck");
+    const data = await res.json();
+    activeCards = data.cards || [];
+    cardDateBadge.textContent = data.day_title || `Deck: ${topic}`;
+    cardIdx = 0;
+    showCurrentCard();
+  } catch (err) {
+    cardQuestion.textContent = "Error generating deck: " + err.message;
+  } finally {
+    genAiCardsBtn.textContent = "New Deck";
+    genAiCardsBtn.disabled = false;
+  }
+}
+
+/* ---------- Huge Master DSA Splash Screen Controller ---------- */
+function initSplashFlasher() {
+  const splash = document.getElementById("introSplash");
+  const fill = document.getElementById("splashFill");
+  const percent = document.getElementById("splashPercent");
+  const status = document.getElementById("splashStatus");
+  const skipBtn = document.getElementById("splashSkip");
+  if (!splash) return;
+
+  const stages = [
+    { at: 18, text: "INITIALIZING TanDSA ENGINE CORE..." },
+    { at: 42, text: "INDEXING 119 CURATED TOPIC CHUNKS..." },
+    { at: 68, text: "SYNCHRONIZING FAANG FLASHCARD DRILLS..." },
+    { at: 88, text: "COMPILING 5 INTERACTIVE ALGO VISUALIZERS..." },
+    { at: 99, text: "OPTIMIZING FAST SINGLE-PASS STREAMING..." },
+    { at: 100, text: "ALL SYSTEMS NOMINAL • ENTERING TanDSA" }
+  ];
+
+  let closed = false;
+  function closeSplash() {
+    if (closed) return;
+    closed = true;
+    if (window._splashTimer) {
+      clearInterval(window._splashTimer);
+      window._splashTimer = null;
+    }
+    if (fill) fill.style.width = "100%";
+    if (percent) percent.textContent = "100%";
+    if (status) status.textContent = "ALL SYSTEMS NOMINAL • ENTERING TanDSA";
+    splash.classList.add("fade-out");
+    setTimeout(() => {
+      splash.style.display = "none";
+    }, 450);
+  }
+
+  if (window._splashTimer) {
+    clearInterval(window._splashTimer);
+    window._splashTimer = null;
+  }
+
+  // Exactly 1.85 seconds total animation duration (~2.0s snappy entrance)
+  const startTime = Date.now();
+  const totalDuration = 1850; // 1.85 seconds
+
+  window._splashTimer = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    let progress = Math.min(100, Math.round((elapsed / totalDuration) * 100));
+
+    if (fill) fill.style.width = progress + "%";
+    if (percent) percent.textContent = progress + "%";
+
+    const stage = stages.find(s => progress <= s.at) || stages[stages.length - 1];
+    if (status && status.textContent !== stage.text) {
+      status.textContent = stage.text;
+    }
+
+    if (progress >= 100) {
+      clearInterval(window._splashTimer);
+      window._splashTimer = null;
+      setTimeout(closeSplash, 150);
+    }
+  }, 25);
+
+  // Esc key closes immediately on capture phase
+  if (!window._hasEscHandler) {
+    window._hasEscHandler = true;
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" || e.key === "Esc") {
+        e.preventDefault();
+        closeSplash();
+      }
+    }, true);
+  }
+
+  // Click on Skip button or anywhere on the splash screen dismisses immediately
+  if (skipBtn && !skipBtn._hasBound) {
+    skipBtn._hasBound = true;
+    skipBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeSplash();
+    });
+  }
+
+  if (!splash._hasBound) {
+    splash._hasBound = true;
+    splash.addEventListener("click", (e) => {
+      closeSplash();
+    });
+  }
+
+  // Replay intro when user clicks the logo in the header
+  const logoBtn = document.getElementById("logoBtn");
+  if (logoBtn && !logoBtn._hasBoundReplay) {
+    logoBtn._hasBoundReplay = true;
+    logoBtn.addEventListener("click", () => {
+      splash.style.display = "flex";
+      splash.classList.remove("fade-out");
+      if (fill) fill.style.width = "0%";
+      if (percent) percent.textContent = "0%";
+      closed = false;
+      initSplashFlasher();
+    });
+  }
+}
+
+// Start immediately on load
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initSplashFlasher);
+} else {
+  initSplashFlasher();
+}
+</script>
+</body>
+</html>
