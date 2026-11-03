@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "{notes/**,static/**,public/**,*.py}"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",

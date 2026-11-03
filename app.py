@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -52,7 +52,15 @@ class ModelSetIn(BaseModel):
 
 @app.get("/")
 def home():
-    return FileResponse(BASE_DIR / "static" / "index.html")
+    for p in [
+        BASE_DIR / "public" / "index.html",
+        BASE_DIR / "static" / "index.html",
+        Path.cwd() / "public" / "index.html",
+        Path.cwd() / "static" / "index.html",
+    ]:
+        if p.exists():
+            return HTMLResponse(content=p.read_text(encoding="utf-8"))
+    return HTMLResponse("<!DOCTYPE html><html><body><h1>TanDSA Backend Running</h1><p>Static index.html not found.</p></body></html>")
 
 
 @app.post("/chat")
