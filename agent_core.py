@@ -19,8 +19,9 @@ except Exception:
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
 
-# On cloud (Vercel) with GROQ_API_KEY, default to Groq Cloud Llama; otherwise local llama3.2:3b
-MODEL = "llama-3.3-70b-versatile" if os.getenv("GROQ_API_KEY") else "llama3.2:3b"
+# Default high-speed Groq model (280+ tokens/sec on free tier)
+DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b"
+MODEL = DEFAULT_GROQ_MODEL if os.getenv("GROQ_API_KEY") else "llama3.2:3b"
 EMBED_MODEL = "nomic-embed-text"
 OPTIONS = {
     "temperature": 0.2,
@@ -241,19 +242,20 @@ def is_groq_model(model_name: str) -> bool:
     m = model_name.lower()
     return (
         "groq" in m
-        or "llama-3.3" in m
-        or "llama-3.1" in m
-        or (bool(os.getenv("GROQ_API_KEY")) and m.startswith("llama-3"))
+        or "qwen" in m
+        or "gpt-oss" in m
+        or "llama-3" in m
+        or (bool(os.getenv("GROQ_API_KEY")) and ("local" not in m and "ollama" not in m))
     )
 
 
 def clean_model_name(model_name: str) -> str:
-    """Extracts raw model id from UI label (e.g. 'llama-3.3-70b-versatile (Groq Cloud)' -> 'llama-3.3-70b-versatile')."""
+    """Extracts raw model id from UI label (e.g. 'qwen/qwen3.8-27b (Groq Cloud)' -> 'qwen/qwen3.8-27b')."""
     return model_name.split()[0].strip()
 
 
 def stream_groq_chat(messages, model: str):
-    """Streams completions from Groq Cloud running Meta's Llama 3 models at 300+ tokens/sec."""
+    """Streams completions from Groq Cloud at 300+ tokens/sec."""
     api_key = os.getenv("GROQ_API_KEY", "").strip()
     if not api_key:
         raise ValueError(
@@ -261,44 +263,67 @@ def stream_groq_chat(messages, model: str):
         )
 
     clean_model = clean_model_name(model)
-    if not clean_model or clean_model == "llama3.2:3b":
-        clean_model = "llama-3.3-70b-versatile"
+    # Map deprecated or unavailable models directly to fast active model
+    if not clean_model or clean_model in (
+        "llama3.2:3b",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-8b-8192",
+        "llama3-70b-8192",
+    ):
+        clean_model = DEFAULT_GROQ_MODEL
 
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
-    payload = {
-        "model": clean_model,
-        "messages": messages,
-        "temperature": 0.2,
-        "stream": True,
-        "max_tokens": 2048
-    }
 
-    with httpx.Client(timeout=30.0) as client:
-        with client.stream("POST", url, headers=headers, json=payload) as response:
-            if response.status_code != 200:
-                err_text = response.read().decode("utf-8", errors="ignore")
-                raise RuntimeError(f"Groq API error ({response.status_code}): {err_text}")
+    def _call(target_model):
+        payload = {
+            "model": target_model,
+            "messages": messages,
+            "temperature": 0.2,
+            "stream": True,
+            "max_tokens": 2048
+        }
+        client = httpx.Client(timeout=30.0)
+        resp = client.send(client.build_request("POST", url, headers=headers, json=payload), stream=True)
+        return client, resp
 
-            for line in response.iter_lines():
-                if not line:
+    client, response = _call(clean_model)
+    # If the requested model is not found (404), seamlessly fallback to DEFAULT_GROQ_MODEL
+    if response.status_code == 404 and clean_model != DEFAULT_GROQ_MODEL:
+        response.close()
+        client.close()
+        client, response = _call(DEFAULT_GROQ_MODEL)
+
+    if response.status_code != 200:
+        err_text = response.read().decode("utf-8", errors="ignore")
+        response.close()
+        client.close()
+        raise RuntimeError(f"Groq API error ({response.status_code}): {err_text}")
+
+    try:
+        for line in response.iter_lines():
+            if not line:
+                continue
+            line = line.strip()
+            if line.startswith("data: "):
+                data_str = line[6:].strip()
+                if data_str == "[DONE]":
+                    break
+                try:
+                    chunk = json.loads(data_str)
+                    delta = chunk.get("choices", [{}])[0].get("delta", {})
+                    content = delta.get("content", "")
+                    if content:
+                        yield content
+                except Exception:
                     continue
-                line = line.strip()
-                if line.startswith("data: "):
-                    data_str = line[6:].strip()
-                    if data_str == "[DONE]":
-                        break
-                    try:
-                        chunk = json.loads(data_str)
-                        delta = chunk.get("choices", [{}])[0].get("delta", {})
-                        content = delta.get("content", "")
-                        if content:
-                            yield content
-                    except Exception:
-                        continue
+    finally:
+        response.close()
+        client.close()
 
 
 # ---------- AGENT TURN ----------
@@ -367,15 +392,15 @@ def run_turn_stream(messages, user_text, mode_override=None, model_override=None
                     pieces = (c.message.content for c in stream if c.message and c.message.content)
                 except Exception:
                     if has_groq_key:
-                        yield {"type": "token", "text": "[Ollama unreachable, routing to Groq Cloud Llama...]\n\n"}
-                        pieces = stream_groq_chat(styled_msgs, "llama-3.3-70b-versatile")
+                        yield {"type": "token", "text": "[Local Ollama unreachable, switching to Groq Cloud...]\n\n"}
+                        pieces = stream_groq_chat(styled_msgs, DEFAULT_GROQ_MODEL)
                     else:
                         raise ValueError(
-                            "Local Ollama is not running or unreachable on this server. "
-                            "Please add GROQ_API_KEY to your Vercel Environment Variables to power cloud inference."
+                            "Local Ollama is not running on your Mac. "
+                            "Please open the Ollama app on your Mac, or add your GROQ_API_KEY in .env."
                         )
             elif has_groq_key:
-                pieces = stream_groq_chat(styled_msgs, "llama-3.3-70b-versatile")
+                pieces = stream_groq_chat(styled_msgs, DEFAULT_GROQ_MODEL)
             else:
                 raise ValueError(
                     "GROQ_API_KEY is not configured on this server. "

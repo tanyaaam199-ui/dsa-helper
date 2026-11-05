@@ -177,12 +177,12 @@ def get_models():
     has_groq = bool(os.getenv("GROQ_API_KEY"))
     if has_groq:
         cloud_models = [
-            "llama-3.3-70b-versatile (Groq Cloud)",
-            "llama-3.1-8b-instant (Groq Cloud)",
+            "qwen/qwen3.8-27b (Groq Cloud)",
+            "openai/gpt-oss-120b (Groq Cloud)",
+            "openai/gpt-oss-20b (Groq Cloud)",
         ]
-        for cm in cloud_models:
-            if cm not in available:
-                available.append(cm)
+        # Put high-speed cloud models first
+        available = cloud_models + [m for m in available if m not in cloud_models]
 
     return {
         "current": agent_core.MODEL,
